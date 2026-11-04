@@ -20,8 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useAuthStore } from "@/stores/auth-store";
-import { logout } from "@/features/auth/api";
+import { useSignOut } from "@/features/auth/api";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -34,14 +33,7 @@ const nav = [
 
 export function AppSidebar() {
   const path = usePathname();
-  const { refreshToken, clear } = useAuthStore();
-  const signOut = async () => {
-    try {
-      if (refreshToken) await logout(refreshToken);
-    } catch {}
-    clear();
-    window.location.href = "/login";
-  };
+  const signOut = useSignOut();
   return (
     <Sidebar>
       <SidebarHeader className="px-4 py-3 font-semibold">

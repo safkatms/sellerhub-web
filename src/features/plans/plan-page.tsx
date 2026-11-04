@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import { useCreatePlan, usePlan, useTogglePlan, useUpdatePlan } from "./api";
 import { applyProblem } from "@/lib/api/errors";
 
@@ -99,14 +100,20 @@ export function PlanPage({ id }: { id?: string }) {
       create.mutate(
         { code: values.code, ...body },
         {
-          onSuccess: (result) => router.replace(`/plans/${result.id}`),
+          onSuccess: (result) => {
+            toast.success("Plan created");
+            router.replace(`/plans/${result.id}`);
+          },
           onError: (error) => applyProblem<FormInput>(error, setError),
         },
       );
     } else {
       update.mutate(
         { ...body, rowVersion: plan!.rowVersion },
-        { onError: (error) => applyProblem<FormInput>(error, setError) },
+        {
+          onSuccess: () => toast.success("Plan saved"),
+          onError: (error) => applyProblem<FormInput>(error, setError),
+        },
       );
     }
   };

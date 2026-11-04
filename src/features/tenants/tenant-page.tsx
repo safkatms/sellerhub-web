@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -119,7 +118,7 @@ export function TenantPage({ id }: Props) {
     handleSubmit,
     setError,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
@@ -129,6 +128,7 @@ export function TenantPage({ id }: Props) {
       currency: TenantCurrency.Bangladesh,
     },
   });
+  const language = useWatch({ control, name: "language" });
 
   useEffect(() => {
     if (!tenant) return;
@@ -176,7 +176,10 @@ export function TenantPage({ id }: Props) {
         currency: TenantCurrency.Bangladesh,
         rowVersion: tenant?.rowVersion ?? "",
       },
-      { onError: (error) => applyProblem<FormInput>(error, setError) },
+      {
+        onSuccess: () => toast.success("Saved"),
+        onError: (error) => applyProblem<FormInput>(error, setError),
+      },
     );
   };
 
@@ -187,7 +190,6 @@ export function TenantPage({ id }: Props) {
 
   const onError = (error: unknown) => applyProblem(error);
   const pending = create.isPending || update.isPending;
-  const language = watch("language");
 
   return (
     <div className="space-y-4">
@@ -508,7 +510,10 @@ export function TenantPage({ id }: Props) {
                           paymentReference: ref || undefined,
                           notes: notes || undefined,
                         },
-                        { onError },
+                        {
+                          onSuccess: () => toast.success("Payment recorded"),
+                          onError,
+                        },
                       )
                     }
                   >

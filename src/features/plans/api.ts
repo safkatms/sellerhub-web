@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { api } from "@/lib/api/client";
 
 export type PlanLimit = { key: string; value: number | null };
@@ -26,7 +25,7 @@ export const useCreatePlan = () => {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (b: CreatePlanBody) => api.post<Plan>("/api/platform/plans", b).then((r) => r.data),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: key }); toast.success("Plan created"); },
+        onSuccess: () => qc.invalidateQueries({ queryKey: key }),
     });
 };
 
@@ -34,7 +33,7 @@ export const useUpdatePlan = (id: number) => {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (b: UpdatePlanBody) => api.put<Plan>(`/api/platform/plans/${id}`, b).then((r) => r.data),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: key }); toast.success("Plan saved"); },
+        onSuccess: () => qc.invalidateQueries({ queryKey: key }),
     });
 };
 

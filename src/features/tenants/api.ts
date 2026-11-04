@@ -1,5 +1,4 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { api } from "@/lib/api/client";
 import type { Paged, PagedRequest } from "@/lib/api/types";
 
@@ -49,7 +48,7 @@ export const useUpdateTenant = (id: string) => {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (b: UpdateTenantBody) => api.put<Tenant>(`${base}/${id}`, b).then((r) => r.data),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: key }); toast.success("Saved"); },
+        onSuccess: () => qc.invalidateQueries({ queryKey: key }),
     });
 };
 
@@ -88,6 +87,6 @@ export const useRecordSubscription = (tenantId: string) => {
     return useMutation({
         mutationFn: (b: { planId: number; months: number; amount?: number; paymentReference?: string; notes?: string }) =>
             api.post<Subscription>(`${base}/${tenantId}/subscriptions`, b).then((r) => r.data),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: key }); toast.success("Payment recorded"); },
+        onSuccess: () => qc.invalidateQueries({ queryKey: key }),
     });
 };

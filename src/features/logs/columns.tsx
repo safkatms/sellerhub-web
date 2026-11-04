@@ -99,6 +99,13 @@ export const loginColumns = (
       accessorKey: "failureReason",
       enableSorting: false,
     },
+    {
+      id: "device",
+      header: "Device",
+      accessorKey: "deviceName",
+      enableSorting: false,
+      cell: ({ getValue }) => getValue<string | null>() ?? "-",
+    },
     { id: "ip", header: "IP", accessorKey: "ipAddress", enableSorting: false },
     {
       id: "userAgent",

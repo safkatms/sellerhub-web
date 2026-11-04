@@ -1,14 +1,7 @@
 import Link from "next/link";
 import { fmtDate } from "@/lib/dayjs";
 import type { AppColumnDef } from "@/lib/table";
-
-export type RecentSignup = {
-  id: string;
-  name: string;
-  slug: string;
-  planCode: string;
-  createdAtUtc: string;
-};
+import type { RecentSignup } from "./api";
 
 export const recentSignupColumns: AppColumnDef<RecentSignup>[] = [
   {

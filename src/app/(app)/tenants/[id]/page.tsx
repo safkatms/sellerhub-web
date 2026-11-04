@@ -1,13 +1,10 @@
-"use client";
-
-import { use } from "react";
 import { TenantPage } from "@/features/tenants/tenant-page";
 
-export default function TenantDetail({
+export default async function Page({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id } = await params;
   return <TenantPage id={id} />;
 }
