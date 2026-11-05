@@ -29,7 +29,7 @@ src/
 │       ├── layout.tsx        <AuthGuard> + sidebar shell
 │       └── <feature>/…/page.tsx   one-line server components that render a feature screen
 │
-├── features/<name>/          FEATURE LAYER — one folder per business area
+├── features/platform/<name>/ FEATURE LAYER — one folder per business area
 │   ├── api.ts                types + raw requests + TanStack Query hooks (no UI)
 │   ├── columns.tsx           table column definitions (presentation only)
 │   ├── *-page.tsx            screens ("use client"): forms, tables, dialogs, toasts
@@ -66,7 +66,7 @@ app (routes)  →  features  →  components / hooks  →  lib
    is the app shell (`app-sidebar.tsx` → `useSignOut`).
 3. **`app/**/page.tsx` holds no logic.** It reads route params and renders one feature screen. Pages are
    server components; the screen they render is the `"use client"` boundary.
-4. **`features/*/api.ts` is the data layer.** It owns DTO types, endpoints, query keys and cache
+4. **`features/platform/*/api.ts` is the data layer.** It owns DTO types, endpoints, query keys and cache
    invalidation. It must not show toasts, navigate, or touch forms. Success/error feedback is the
    screen's job (`mutate(vars, { onSuccess, onError })`).
 5. **`columns.tsx` is presentation.** Any cell with its own state or mutation lives in its own component
@@ -77,13 +77,13 @@ app (routes)  →  features  →  components / hooks  →  lib
 ## Request & auth flow
 
 ```
-Screen ──useXxx()──▶ features/x/api.ts ──▶ lib/api/client (axios)
+Screen ──useXxx()──▶ features/platform/x/api.ts ──▶ lib/api/client (axios)
                                                │  request:  Authorization: Bearer <getAccessToken()>
                                                │  401:      refreshAccessToken() once, retry
                                                ▼
-                                    features/auth/session.ts  (handlers registered at startup)
+                                    features/platform/auth/session.ts  (handlers registered at startup)
                                                │
-                                    features/auth/store.ts (zustand, persisted)
+                                    features/platform/auth/store.ts (zustand, persisted)
 ```
 
 - `setupApiAuth()` (called once in `app/providers.tsx`) registers how to read the token, how to refresh,
@@ -131,7 +131,7 @@ The API returns RFC 7807 `ProblemDetails` with a `code`. `applyProblem(error, se
 
 ## Adding a feature
 
-1. `src/features/<name>/api.ts`: types, query/mutation hooks, invalidation. No toasts.
+1. `src/features/platform/<name>/api.ts`: types, query/mutation hooks, invalidation. No toasts.
 2. `columns.tsx` if it has a table. `<name>-page.tsx` (`"use client"`) for the screen.
 3. `src/app/(app)/<name>/page.tsx`: `export default function Page() { return <NamePage />; }`
 4. Add a nav entry in `components/app-sidebar.tsx`.

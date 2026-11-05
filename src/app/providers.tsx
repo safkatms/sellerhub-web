@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { setupApiAuth } from "@/features/auth/session";
+import { setupApiAuth } from "@/features/platform/auth/session";
 
 // Plug the auth session into the generic API client before any request is made.
 setupApiAuth();

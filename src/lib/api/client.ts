@@ -3,7 +3,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 /**
  * Generic HTTP client. This module is infrastructure: it knows nothing about
  * stores, features, routes or auth endpoints. The auth feature plugs its
- * behaviour in through `configureApiAuth` (see `features/auth/session.ts`).
+ * behaviour in through `configureApiAuth` (see `features/platform/auth/session.ts`).
  */
 export const apiBaseURL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
 export const api = axios.create({ baseURL: apiBaseURL });

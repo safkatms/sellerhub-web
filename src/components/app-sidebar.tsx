@@ -20,15 +20,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useSignOut } from "@/features/auth/api";
+import { useSignOut } from "@/features/platform/auth/api";
 
 const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/tenants", label: "Shops", icon: Store },
-  { href: "/plans", label: "Plans", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: SlidersHorizontal },
-  { href: "/logs", label: "Logs", icon: ScrollText },
-  { href: "/admins", label: "Admins", icon: ShieldCheck },
+  { href: "/platform/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/platform/tenants", label: "Shops", icon: Store },
+  { href: "/platform/plans", label: "Plans", icon: CreditCard },
+  { href: "/platform/settings", label: "Settings", icon: SlidersHorizontal },
+  { href: "/platform/logs", label: "Logs", icon: ScrollText },
+  { href: "/platform/admins", label: "Admins", icon: ShieldCheck },
 ];
 
 export function AppSidebar() {
