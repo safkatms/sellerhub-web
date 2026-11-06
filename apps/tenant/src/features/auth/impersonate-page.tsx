@@ -7,7 +7,7 @@ import { useImpersonationStore } from "./store";
 
 /**
  * Landing page for "Impersonate" in the platform app, which opens
- *   /impersonate#token=<jwt>&expiresIn=<seconds>&name=<user name>
+ *   /impersonate#token=<jwt>&expiresIn=<seconds>&name=<user name>&tz=<shop IANA zone>
  * in a new tab. The token travels in the URL fragment, which browsers never send to a server.
  * It is moved into this tab's sessionStorage and the fragment is wiped from the address bar and history.
  * Without a token (link opened by hand) it just continues to the app as normal.
@@ -31,6 +31,7 @@ export function ImpersonatePage() {
       useImpersonationStore.getState().start({
         accessToken,
         userName: params.get("name"),
+        timeZone: params.get("tz"),
         expiresAtUtc: expiresIn > 0 ? new Date(Date.now() + expiresIn * 1000).toISOString() : null,
       });
     }

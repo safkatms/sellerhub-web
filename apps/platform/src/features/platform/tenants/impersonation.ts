@@ -13,6 +13,7 @@ export function openTenantApp(r: ImpersonationResult): boolean {
     token: r.accessToken,
     expiresIn: String(r.expiresInSeconds),
     name: r.userName,
+    tz: r.timeZone,
   });
   window.open(`${tenantAppURL}/impersonate#${fragment}`, "_blank", "noopener,noreferrer");
   return true;

@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@sellerhub/ui/components/sideba
 import { AppSidebar } from "@/components/app-sidebar";
 import { AuthGuard } from "@/features/auth/auth-guard";
 import { ImpersonationBanner } from "@/features/auth/impersonation-banner";
+import { DisplayZoneProvider } from "@sellerhub/ui/display-zone";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,7 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 p-4">
           <ImpersonationBanner />
           <SidebarTrigger className="mb-4" />
-          {children}
+          <DisplayZoneProvider>{children}</DisplayZoneProvider>
         </main>
       </SidebarProvider>
     </AuthGuard>

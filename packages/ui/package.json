@@ -12,6 +12,7 @@
     "./hooks/*": "./src/hooks/*.ts",
     "./lib/*": "./src/lib/*.ts",
     "./data-table": "./src/data-table.tsx",
+    "./display-zone": "./src/display-zone.tsx",
     "./time-zone-select": "./src/time-zone-select.tsx"
   },
   "scripts": {

@@ -1,7 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@sellerhub/ui/components/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AuthGuard } from "@/features/platform/auth/auth-guard";
-import { DisplayZoneProvider } from "@/features/platform/auth/display-zone";
+import { DisplayZoneProvider } from "@sellerhub/ui/display-zone";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (

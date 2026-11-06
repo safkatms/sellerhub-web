@@ -48,6 +48,7 @@ import { openTenantApp } from "./impersonation";
 import { usePlans } from "@/features/platform/plans/api";
 import { applyProblem } from "@sellerhub/api-client/errors";
 import { fmtDate } from "@sellerhub/ui/lib/dayjs";
+import { TimeZoneSelect } from "@sellerhub/ui/time-zone-select";
 import {
   planStateLabel,
   planStateVariant,
@@ -69,7 +70,8 @@ const schema = z.object({
   slug: opt,
   email: opt,
   phone: opt,
-  timeZone: z.enum([TenantTimeZone.Bangladesh]),
+  // Any IANA zone; the API checks it with TenantTime.IsValid.
+  timeZone: z.string().trim().min(1, "Required").max(64),
   language: z.enum([TenantLanguage.English, TenantLanguage.Bangla]),
   currency: z.enum([TenantCurrency.Bangladesh]),
   ownerFullName: z.string().min(1, "Required").max(200),
@@ -130,6 +132,7 @@ export function TenantPage({ id }: Props) {
     },
   });
   const language = useWatch({ control, name: "language" });
+  const timeZone = useWatch({ control, name: "timeZone" });
 
   useEffect(() => {
     if (!tenant) return;
@@ -138,10 +141,7 @@ export function TenantPage({ id }: Props) {
       slug: tenant.slug,
       email: tenant.email ?? undefined,
       phone: tenant.phone ?? undefined,
-      timeZone:
-        tenant.timeZone === TenantTimeZone.Bangladesh
-          ? tenant.timeZone
-          : TenantTimeZone.Bangladesh,
+      timeZone: tenant.timeZone || TenantTimeZone.Bangladesh,
       language:
         tenant.language === TenantLanguage.Bangla
           ? TenantLanguage.Bangla
@@ -301,12 +301,22 @@ export function TenantPage({ id }: Props) {
                   </div>
                 ))}
                 <div className="space-y-1.5">
-                  <Label htmlFor="timeZone">Time zone</Label>
-                  <Input
-                    id="timeZone"
-                    value={TenantTimeZone.Bangladesh}
-                    disabled
+                  <Label>Time zone</Label>
+                  <TimeZoneSelect
+                    value={timeZone}
+                    onChange={(zone) =>
+                      setValue("timeZone", zone, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    className="w-full flex-none"
                   />
+                  {errors.timeZone && (
+                    <p className="text-sm text-destructive">
+                      {errors.timeZone.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="currency">Currency</Label>

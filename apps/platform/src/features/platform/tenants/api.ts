@@ -55,6 +55,8 @@ export const useUpdateTenant = (id: string) => {
 /** Short-lived shop-user token with no refresh token. */
 export type ImpersonationResult = {
     accessToken: string; expiresInSeconds: number; tenantId: string; userId: string; userName: string;
+    /** The shop's IANA zone, passed on to the shop app. */
+    timeZone: string;
 };
 
 export const useTenantAction = (id: string) => {

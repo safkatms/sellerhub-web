@@ -8,6 +8,8 @@ type AuthState = {
     accessToken: string | null;
     refreshToken: string | null;
     user: TenantUser | null;
+    /** The shop's IANA zone for displaying dates; comes from the server at login/refresh. */
+    timeZone: string | null;
     setSession: (r: TenantAuthResult) => void;
     setUser: (u: TenantUser) => void;
     clear: () => void;
@@ -19,9 +21,11 @@ export const useAuthStore = create<AuthState>()(
             accessToken: null,
             refreshToken: null,
             user: null,
-            setSession: (r) => set({ accessToken: r.accessToken, refreshToken: r.refreshToken, user: r.user }),
+            timeZone: null,
+            setSession: (r) =>
+                set({ accessToken: r.accessToken, refreshToken: r.refreshToken, user: r.user, timeZone: r.timeZone }),
             setUser: (user) => set({ user }),
-            clear: () => set({ accessToken: null, refreshToken: null, user: null }),
+            clear: () => set({ accessToken: null, refreshToken: null, user: null, timeZone: null }),
         }),
         { name: "sellerhub-tenant-auth" }
     )
@@ -36,14 +40,16 @@ type ImpersonationState = {
     accessToken: string | null;
     userName: string | null;
     expiresAtUtc: string | null;
+    /** The impersonated shop's IANA zone. */
+    timeZone: string | null;
     /** The tab was an impersonation tab and the session is over (expired or ended by the admin). */
     ended: boolean;
-    start: (s: { accessToken: string; userName: string | null; expiresAtUtc: string | null }) => void;
+    start: (s: { accessToken: string; userName: string | null; expiresAtUtc: string | null; timeZone: string | null }) => void;
     end: () => void;
     reset: () => void;
 };
 
-const noImpersonation = { accessToken: null, userName: null, expiresAtUtc: null, ended: false };
+const noImpersonation = { accessToken: null, userName: null, expiresAtUtc: null, timeZone: null, ended: false };
 
 export const useImpersonationStore = create<ImpersonationState>()(
     persist(
@@ -64,6 +70,12 @@ const isImpersonationTab = (s: ImpersonationState) => s.accessToken !== null || 
 export const getAccessToken = () => {
     const imp = useImpersonationStore.getState();
     return isImpersonationTab(imp) ? imp.accessToken : useAuthStore.getState().accessToken;
+};
+
+/** Display zone of the session this tab uses (null = browser zone). */
+export const getSessionTimeZone = () => {
+    const imp = useImpersonationStore.getState();
+    return isImpersonationTab(imp) ? imp.timeZone : useAuthStore.getState().timeZone;
 };
 
 /** Reactive view of the session this tab is using. */
