@@ -1,0 +1,24 @@
+{
+  "name": "@sellerhub/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    "./client": "./src/client.ts",
+    "./errors": "./src/errors.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "^1.21.0"
+  },
+  "peerDependencies": {
+    "react-hook-form": "^7",
+    "sonner": "^2"
+  },
+  "devDependencies": {
+    "@sellerhub/config": "*"
+  }
+}

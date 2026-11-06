@@ -1,0 +1,10 @@
+{
+  "extends": "@sellerhub/config/tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@sellerhub/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

@@ -2,7 +2,33 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — 2026-11-05
+## [Unreleased] — 2026-11-06
+
+Split into a monorepo with separate platform and tenant apps. See [ARCHITECTURE.md](ARCHITECTURE.md).
+
+### Changed
+- **npm workspaces.** The existing app moved to `apps/platform` (`@sellerhub/platform`) unchanged: same routes,
+  same localStorage key. Run it with `npm run dev:platform`.
+- **Shared packages.**
+  - `components/ui/*`, `data-table`, `time-zone-select`, `hooks/*`, `lib/{utils,table,dayjs}`, `globals.css` →
+    `@sellerhub/ui`.
+  - `lib/api/*` → `@sellerhub/api-client`.
+  - Common tsconfig → `@sellerhub/config`.
+  - Imports changed from `@/components/ui/x` to `@sellerhub/ui/components/x`, and so on.
+- **Impersonate** opens the tenant app in a new tab as the shop user (token passed in the URL fragment and kept
+  in that tab's sessionStorage) when `NEXT_PUBLIC_TENANT_APP_URL` is set. Without it, the token is still
+  copied to the clipboard.
+- `.gitignore` entries for `.next/`, `out/`, `build/`, `coverage/`, `node_modules/` now match nested apps.
+
+### Added
+- **Tenant app** `apps/tenant` (`@sellerhub/tenant`, port 3001), on the API's `/api/auth`:
+  - sign-in with email or phone, and shop registration
+  - token refresh and sign-out
+  - forced change-password for users with a temporary password
+  - impersonation landing page with a banner and an "ended" state
+  - a placeholder dashboard
+
+## 2026-11-05
 
 Layering refactor. No API contract or visible behaviour changes except where noted under **Fixed**.
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the resulting rules.
