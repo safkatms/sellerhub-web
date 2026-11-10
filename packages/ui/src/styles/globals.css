@@ -2,7 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Each app's own files are detected automatically; the shared package lives outside the app, so list it here. */
 @source "../";
 
 @custom-variant dark (&:is(.dark *));
@@ -13,6 +12,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -21,11 +21,16 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -42,6 +47,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -51,83 +57,266 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ========================================
+   LIGHT THEME - SELLERHUB
+======================================== */
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  color-scheme: light;
+
+  /* Palette: near-black plum sidebar with a magenta glow,
+     lavender-white canvas, violet accent. */
+
+  --background: oklch(0.985 0.006 300);
+  --foreground: oklch(0.2 0.02 290);
+
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.2 0.02 290);
+
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.2 0.02 290);
+
+  /* Primary - Violet */
+  --primary: oklch(0.62 0.17 295);
+  --primary-foreground: oklch(0.99 0 0);
+
+  --secondary: oklch(0.95 0.025 300);
+  --secondary-foreground: oklch(0.38 0.1 295);
+
+  --muted: oklch(0.965 0.008 300);
+  --muted-foreground: oklch(0.55 0.02 290);
+
+  --accent: oklch(0.95 0.025 300);
+  --accent-foreground: oklch(0.38 0.1 295);
+
+  --destructive: oklch(0.6 0.22 20);
+  --success: oklch(0.65 0.15 155);
+  --warning: oklch(0.76 0.15 75);
+
+  --border: oklch(0.92 0.012 295);
+  --input: oklch(0.92 0.012 295);
+  --ring: oklch(0.62 0.17 295);
+
+  /* Charts - violet, lilac, then status-style hues */
+  --chart-1: oklch(0.62 0.17 295);
+  --chart-2: oklch(0.88 0.04 300);
+  --chart-3: oklch(0.65 0.15 155);
+  --chart-4: oklch(0.76 0.15 75);
+  --chart-5: oklch(0.63 0.2 10);
+
+  --radius: 0.75rem;
+
+  /* Sidebar - near-black plum */
+  --sidebar: oklch(0.16 0.012 300);
+  --sidebar-foreground: oklch(0.93 0.01 300);
+
+  --sidebar-primary: oklch(0.72 0.15 300);
+  --sidebar-primary-foreground: oklch(0.16 0.012 300);
+
+  --sidebar-accent: oklch(1 0 0 / 8%);
+  --sidebar-accent-foreground: oklch(0.99 0 0);
+
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.72 0.15 300);
 }
 
+/* ========================================
+   DARK THEME
+======================================== */
+
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  color-scheme: dark;
+
+  --background: oklch(0.17 0.02 295);
+  --foreground: oklch(0.96 0.008 300);
+
+  --card: oklch(0.21 0.022 295);
+  --card-foreground: oklch(0.96 0.008 300);
+
+  --popover: oklch(0.22 0.024 295);
+  --popover-foreground: oklch(0.96 0.008 300);
+
+  --primary: oklch(0.72 0.15 295);
+  --primary-foreground: oklch(0.16 0.02 295);
+
+  --secondary: oklch(0.27 0.03 295);
+  --secondary-foreground: oklch(0.95 0.01 300);
+
+  --muted: oklch(0.25 0.02 295);
+  --muted-foreground: oklch(0.7 0.02 295);
+
+  --accent: oklch(0.3 0.05 295);
+  --accent-foreground: oklch(0.95 0.015 300);
+
+  --destructive: oklch(0.66 0.2 20);
+  --success: oklch(0.72 0.15 155);
+  --warning: oklch(0.8 0.14 75);
+
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.72 0.15 295);
+
+  --chart-1: oklch(0.72 0.15 295);
+  --chart-2: oklch(0.45 0.06 300);
+  --chart-3: oklch(0.72 0.15 155);
+  --chart-4: oklch(0.8 0.14 75);
+  --chart-5: oklch(0.7 0.18 10);
+
+  /* Sidebar */
+  --sidebar: oklch(0.13 0.012 300);
+  --sidebar-foreground: oklch(0.93 0.01 300);
+
+  --sidebar-primary: oklch(0.72 0.15 300);
+  --sidebar-primary-foreground: oklch(0.13 0.012 300);
+
+  --sidebar-accent: oklch(1 0 0 / 8%);
+  --sidebar-accent-foreground: oklch(0.99 0 0);
+
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.72 0.15 300);
 }
+
+/* ========================================
+   BASE STYLES
+======================================== */
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ========================================
+   LIQUID GLASS SIDEBAR
+   Unlayered on purpose: it must win over the sidebar primitive's
+   Tailwind utilities regardless of specificity.
+======================================== */
+
+/* Ambient plum backdrop the glass panel floats over. */
+.glass-sidebar {
+  border: none !important;
+  background-color: var(--sidebar);
+  background-image:
+    radial-gradient(
+      70% 38% at 0% 100%,
+      oklch(0.55 0.22 345 / 80%),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 30% at 100% 50%,
+      oklch(0.5 0.2 295 / 55%),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 28% at 10% 8%,
+      oklch(0.48 0.16 265 / 45%),
+      transparent 70%
+    );
+}
+
+/* The frosted panel itself. */
+.glass-sidebar [data-slot="sidebar-inner"] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(
+    160deg,
+    oklch(1 0 0 / 14%) 0%,
+    oklch(1 0 0 / 4%) 40%,
+    oklch(1 0 0 / 3%) 70%,
+    oklch(1 0 0 / 9%) 100%
+  );
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 35%),
+    inset 0 -1px 0 oklch(1 0 0 / 10%),
+    0 24px 48px -16px oklch(0 0 0 / 55%);
+}
+
+/* Glossy rim: a gradient hairline border, brightest at the top-left. */
+.glass-sidebar [data-slot="sidebar-inner"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    150deg,
+    oklch(1 0 0 / 55%),
+    oklch(1 0 0 / 8%) 35%,
+    oklch(1 0 0 / 4%) 65%,
+    oklch(1 0 0 / 30%)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  padding: 0px;
+}
+
+/* Soft specular sheen across the upper half. */
+.glass-sidebar [data-slot="sidebar-inner"]::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 45% 0;
+  z-index: -1;
+  background: radial-gradient(
+    120% 60% at 20% 0%,
+    oklch(1 0 0 / 14%),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Glass pill: the sliding active-nav indicator and the user card. */
+.glass-pill {
+  color: #fff;
+  background: linear-gradient(180deg, oklch(1 0 0 / 18%), oklch(1 0 0 / 6%));
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 45%),
+    inset 0 -1px 0 oklch(1 0 0 / 8%),
+    inset 0 0 0 1px oklch(1 0 0 / 12%),
+    0 6px 16px -6px oklch(0 0 0 / 45%);
+}
+
+.glass-pill {
+  transition: background 150ms ease;
+}
+.glass-pill:hover {
+  background: linear-gradient(180deg, oklch(1 0 0 / 22%), oklch(1 0 0 / 9%));
+}
+
+/* Sliding indicator: glides between menu items with a slight springy settle. */
+.nav-indicator {
+  transition:
+    transform 420ms cubic-bezier(0.34, 1.3, 0.64, 1),
+    height 300ms ease,
+    opacity 200ms ease;
+}
+.nav-indicator[data-instant] {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-indicator {
+    transition: opacity 150ms ease;
   }
 }
