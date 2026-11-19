@@ -45,6 +45,10 @@ import {
   useUpdateTenant,
 } from "./api";
 import { openTenantApp } from "./impersonation";
+import { TenantFeaturesCard, TenantLimitsCard } from "./tenant-entitlements";
+import { TenantBillingCards } from "@/features/platform/billing/tenant-billing";
+import { TenantCrmCards } from "@/features/platform/crm/tenant-crm";
+import { Perm, useCan } from "@/features/platform/access/api";
 import { usePlans } from "@/features/platform/plans/api";
 import { applyProblem } from "@sellerhub/api-client/errors";
 import { fmtDate } from "@sellerhub/ui/lib/dayjs";
@@ -82,7 +86,7 @@ type FormInput = z.input<typeof schema>;
 type FormValues = z.output<typeof schema>;
 
 type Props = { id?: string };
-type Tab = "details" | "actions" | "subscriptions";
+type Tab = "details" | "actions" | "subscriptions" | "billing" | "entitlements" | "crm";
 
 const fields: [keyof FormInput, string][] = [
   ["name", "Shop name"],
@@ -103,6 +107,7 @@ export function TenantPage({ id }: Props) {
   const create = useCreateTenant();
   const update = useUpdateTenant(id ?? "");
   const actions = useTenantAction(id ?? "");
+  const can = useCan();
   const record = useRecordSubscription(id ?? "");
   const [tab, setTab] = useState<Tab>("details");
   const [reason, setReason] = useState("");
@@ -256,6 +261,13 @@ export function TenantPage({ id }: Props) {
             <div>Expires: {fmtDate(tenant.planExpiresAtUtc)}</div>
             <div>Users: {tenant.userCount}</div>
             <div>Owner: {tenant.owner?.fullName ?? "-"}</div>
+            {tenant.source && <div>Source: {tenant.source}{tenant.referredBy ? ` (via ${tenant.referredBy})` : ""}</div>}
+            {tenant.status === TenantStatus.Suspended && tenant.suspendReason && (
+              <div className="text-destructive sm:col-span-2">Suspended: {tenant.suspendReason}</div>
+            )}
+            {tenant.status === TenantStatus.Closed && tenant.closedReason && (
+              <div className="text-destructive sm:col-span-2">Closed: {tenant.closedReason}</div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -271,6 +283,11 @@ export function TenantPage({ id }: Props) {
           {!isNew && (
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
           )}
+          {!isNew && (
+            <TabsTrigger value="entitlements">Limits &amp; Features</TabsTrigger>
+          )}
+          {!isNew && <TabsTrigger value="billing">Billing</TabsTrigger>}
+          {!isNew && <TabsTrigger value="crm">Notes &amp; Tags</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="details">
@@ -391,7 +408,7 @@ export function TenantPage({ id }: Props) {
                   onChange={(event) => setReason(event.target.value)}
                 />
                 <div className="flex flex-wrap gap-2">
-                  {tenant.status === TenantStatus.Active && (
+                  {can(Perm.TenantStatus) && tenant.status === TenantStatus.Active && (
                     <Button
                       variant="outline"
                       onClick={() =>
@@ -401,7 +418,7 @@ export function TenantPage({ id }: Props) {
                       Suspend
                     </Button>
                   )}
-                  {tenant.status === TenantStatus.Suspended && (
+                  {can(Perm.TenantStatus) && tenant.status === TenantStatus.Suspended && (
                     <Button
                       variant="outline"
                       onClick={() =>
@@ -411,7 +428,7 @@ export function TenantPage({ id }: Props) {
                       Reactivate
                     </Button>
                   )}
-                  {tenant.status !== TenantStatus.Closed && (
+                  {can(Perm.TenantStatus) && tenant.status !== TenantStatus.Closed && (
                     <Button
                       variant="destructive"
                       onClick={() =>
@@ -423,6 +440,7 @@ export function TenantPage({ id }: Props) {
                     </Button>
                   )}
                   <Button
+                    disabled={!can(Perm.TenantPasswordReset)}
                     variant="outline"
                     onClick={() =>
                       actions.resetPassword.mutate(undefined, {
@@ -439,7 +457,7 @@ export function TenantPage({ id }: Props) {
                   </Button>
                   <Button
                     variant="outline"
-                    disabled={!reason}
+                    disabled={!reason || !can(Perm.TenantImpersonate)}
                     onClick={() =>
                       actions.impersonate.mutate(reason, {
                         onSuccess: (result) => {
@@ -576,6 +594,33 @@ export function TenantPage({ id }: Props) {
                   </Table>
                 </CardContent>
               </Card>
+            </div>
+          </TabsContent>
+        )}
+
+        {tenant && (
+          <TabsContent value="billing">
+            <TenantBillingCards tenantId={tenant.id} readOnly={tenant.status === TenantStatus.Closed} />
+          </TabsContent>
+        )}
+
+        {tenant && (
+          <TabsContent value="crm">
+            <TenantCrmCards tenantId={tenant.id} />
+          </TabsContent>
+        )}
+
+        {tenant && (
+          <TabsContent value="entitlements">
+            <div className="space-y-4">
+              <TenantLimitsCard
+                tenantId={tenant.id}
+                readOnly={tenant.status === TenantStatus.Closed}
+              />
+              <TenantFeaturesCard
+                tenantId={tenant.id}
+                readOnly={tenant.status === TenantStatus.Closed}
+              />
             </div>
           </TabsContent>
         )}

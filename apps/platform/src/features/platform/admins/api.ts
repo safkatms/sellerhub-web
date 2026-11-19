@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@sellerhub/api-client/client";
 
-export type AdminItem = { id: string; fullName: string; email: string; status: number; lastLoginAtUtc: string | null; createdAtUtc: string };
+export type AdminItem = {
+    id: string; fullName: string; email: string; status: number; lastLoginAtUtc: string | null; createdAtUtc: string;
+    isSuperAdmin: boolean; twoFactorEnabled: boolean; roles: string[] | null;
+};
 const key = ["admins"] as const;
 
 export const useAdmins = () =>

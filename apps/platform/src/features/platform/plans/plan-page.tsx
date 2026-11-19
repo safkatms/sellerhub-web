@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sellerhub/ui/componen
 import { Spinner } from "@sellerhub/ui/components/spinner";
 import { toast } from "sonner";
 import { useCreatePlan, usePlan, useTogglePlan, useUpdatePlan } from "./api";
+import { PlanFeaturesCard } from "./plan-features";
+import { PlanPricesCard } from "@/features/platform/billing/plan-prices";
+import { useLimitDefinitions } from "@/features/platform/entitlements/api";
 import { applyProblem } from "@sellerhub/api-client/errors";
 
 const nullableNumber = z.preprocess(
@@ -46,7 +49,8 @@ export function PlanPage({ id }: { id?: string }) {
   const create = useCreatePlan();
   const update = useUpdatePlan(numericId ?? 0);
   const toggle = useTogglePlan();
-  const [tab, setTab] = useState<"details" | "actions">("details");
+  const { data: limitDefinitions } = useLimitDefinitions();
+  const [tab, setTab] = useState<"details" | "prices" | "features" | "actions">("details");
   const {
     register,
     reset,
@@ -66,6 +70,24 @@ export function PlanPage({ id }: { id?: string }) {
     },
   });
   const limits = useFieldArray({ control, name: "limits" });
+  const watchedLimits = useWatch({ control, name: "limits" });
+  const usedKeys = (watchedLimits ?? []).map((limit) => limit.key);
+  // Keys come from the catalog (core.LimitDefinitions); the API rejects unknown keys.
+  const keyOptions = (current: string) => {
+    const options = (limitDefinitions ?? []).filter(
+      (d) => d.key === current || (d.isActive && !usedKeys.includes(d.key)),
+    );
+    if (current && !options.some((d) => d.key === current))
+      options.unshift({
+        key: current,
+        // Until the catalog loads, show the key itself so the saved value stays selected.
+        name: limitDefinitions ? `${current} (not in catalog)` : current,
+        description: null, unit: "", resetPeriod: 0, sortOrder: 0, isActive: false,
+      });
+    return options;
+  };
+  const canAddLimit =
+    (limitDefinitions ?? []).some((d) => d.isActive && !usedKeys.includes(d.key));
 
   useEffect(() => {
     if (!plan) return;
@@ -149,6 +171,8 @@ export function PlanPage({ id }: { id?: string }) {
       >
         <TabsList variant="line">
           <TabsTrigger value="details">Details</TabsTrigger>
+          {!isNew && <TabsTrigger value="prices">Prices</TabsTrigger>}
+          {!isNew && <TabsTrigger value="features">Features</TabsTrigger>}
           {!isNew && <TabsTrigger value="actions">Actions</TabsTrigger>}
         </TabsList>
 
@@ -208,6 +232,7 @@ export function PlanPage({ id }: { id?: string }) {
                       type="button"
                       variant="outline"
                       size="sm"
+                      disabled={!canAddLimit}
                       onClick={() => limits.append({ key: "", value: null })}
                     >
                       Add limit
@@ -215,10 +240,19 @@ export function PlanPage({ id }: { id?: string }) {
                   </div>
                   {limits.fields.map((field, index) => (
                     <div key={field.id} className="flex gap-2">
-                      <Input
-                        placeholder="Key"
+                      <select
+                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        aria-label="Limit"
                         {...register(`limits.${index}.key`)}
-                      />
+                      >
+                        <option value="">Limit…</option>
+                        {keyOptions(usedKeys[index] ?? "").map((d) => (
+                          <option key={d.key} value={d.key}>
+                            {d.name}
+                            {d.unit && d.unit !== "count" ? ` (${d.unit})` : ""}
+                          </option>
+                        ))}
+                      </select>
                       <Input
                         type="number"
                         min={0}
@@ -245,6 +279,18 @@ export function PlanPage({ id }: { id?: string }) {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {!isNew && plan && (
+          <TabsContent value="prices">
+            <PlanPricesCard planId={plan.id} />
+          </TabsContent>
+        )}
+
+        {!isNew && plan && (
+          <TabsContent value="features">
+            <PlanFeaturesCard planId={plan.id} />
+          </TabsContent>
+        )}
 
         {!isNew && plan && (
           <TabsContent value="actions">

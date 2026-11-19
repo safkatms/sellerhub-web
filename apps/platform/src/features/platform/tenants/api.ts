@@ -11,8 +11,9 @@ export type TenantOwner = { id: string; fullName: string; email: string | null; 
 export type Tenant = Omit<TenantListItem, "createdAtUtc"> & {
     graceEndsAtUtc: string | null; timeZone: string; language: string; currency: string;
     userCount: number; owner: TenantOwner | null; createdAtUtc: string; rowVersion: string;
+    suspendReason: string | null; closedReason: string | null; source: string | null; referredBy: string | null;
 };
-export type TenantListQuery = PagedRequest & { status?: number; planId?: number; planState?: number };
+export type TenantListQuery = PagedRequest & { status?: number; planId?: number; planState?: number; tagId?: number };
 
 export type CreateTenantBody = {
     name: string; slug?: string; email?: string; phone?: string; timeZone?: string; language?: string; currency?: string; planId?: number;

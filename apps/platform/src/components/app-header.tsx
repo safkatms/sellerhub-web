@@ -16,6 +16,8 @@ import {
 const labels: Record<string, string> = {
   tenants: "Shops",
   admins: "Admin",
+  ops: "Operations",
+  security: "Security",
 };
 
 const toLabel = (segment: string) =>

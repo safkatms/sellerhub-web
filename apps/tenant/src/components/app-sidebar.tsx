@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { KeyRound, LayoutDashboard, LogOut } from "lucide-react";
+import { Database, KeyRound, LayoutDashboard, LifeBuoy, LogOut, Wallet } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +15,12 @@ import {
 import { useSignOut } from "@/features/auth/api";
 import { useActiveSession } from "@/features/auth/store";
 
-const nav = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }];
+const nav = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/billing", label: "Billing", icon: Wallet },
+  { href: "/support", label: "Support", icon: LifeBuoy },
+  { href: "/account-data", label: "Data & account", icon: Database },
+];
 
 export function AppSidebar() {
   const path = usePathname();

@@ -6,7 +6,8 @@ import type { PlatformAdmin, PlatformAuthResult } from "./types";
 
 const base = "/api/platform/auth";
 
-export const login = (body: { email: string; password: string }) =>
+/** `totpCode` only when the API answered 401 "two_factor_required". */
+export const login = (body: { email: string; password: string; totpCode?: string }) =>
     api.post<PlatformAuthResult>(`${base}/login`, body).then((r) => r.data);
 
 /** Uses a bare axios call so the refresh request never goes through the 401 interceptor. */

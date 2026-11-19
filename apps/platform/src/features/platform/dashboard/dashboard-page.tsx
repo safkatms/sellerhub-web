@@ -26,6 +26,7 @@ import { fmtDate } from "@sellerhub/ui/lib/dayjs";
 import { useAuthStore } from "@/features/platform/auth/store";
 import { useDashboard, type RecentSignup } from "./api";
 import { recentSignupColumns } from "./columns";
+import { TrendsCard } from "@/features/platform/ops/trends-card";
 
 /* ---------- building blocks ---------- */
 
@@ -331,6 +332,7 @@ export function DashboardPage() {
           </section>
         </div>
       </div>
+      <TrendsCard />
     </div>
   );
 }

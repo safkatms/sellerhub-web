@@ -14,17 +14,19 @@ import {
   useAuditLogs,
   useLoginLogs,
   useErrorLogs,
+  useImpersonationLogs,
   type AuditLog,
   type LoginLog,
 } from "./api";
-import { auditColumns, errorColumns, loginColumns } from "./columns";
+import { auditColumns, errorColumns, impersonationColumns, loginColumns } from "./columns";
 import { AuditLogDialog, ErrorLogDialog, LoginLogDialog } from "./log-details";
 
-type Tab = "audit" | "logins" | "errors";
+type Tab = "audit" | "logins" | "errors" | "impersonations";
 const tabs: { id: Tab; label: string; placeholder: string }[] = [
   { id: "audit", label: "Audit", placeholder: "Search action…" },
   { id: "logins", label: "Logins", placeholder: "Search email/phone…" },
   { id: "errors", label: "Errors", placeholder: "Search path/message…" },
+  { id: "impersonations", label: "Login as shop", placeholder: "Search reason…" },
 ];
 const pageSize = 20;
 
@@ -42,6 +44,7 @@ export function LogsPage() {
   const audit = useAuditLogs(q, tab === "audit");
   const logins = useLoginLogs({ ...q, isSuccess }, tab === "logins");
   const errors = useErrorLogs(q, tab === "errors");
+  const impersonations = useImpersonationLogs(q, tab === "impersonations");
 
   const switchTab = (t: Tab) => {
     setTab(t);
@@ -137,6 +140,16 @@ export function LogsPage() {
           data={errors.data?.items ?? []}
           loading={errors.isLoading}
           total={errors.data?.totalCount ?? 0}
+          {...paging}
+        />
+      )}
+
+      {tab === "impersonations" && (
+        <DataTable
+          columns={impersonationColumns()}
+          data={impersonations.data?.items ?? []}
+          loading={impersonations.isLoading}
+          total={impersonations.data?.totalCount ?? 0}
           {...paging}
         />
       )}

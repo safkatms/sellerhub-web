@@ -12,7 +12,16 @@ import {
   ShoppingBag,
   LogOut,
   ChevronDown,
+  Wallet,
+  LifeBuoy,
+  Megaphone,
+  Send,
+  Wrench,
+  KeyRound,
+  Lock,
 } from "lucide-react";
+import { Perm, useCan, type PermCode } from "@/features/platform/access/api";
+import { useOpenTicketCount } from "@/features/platform/ops/api";
 import {
   Sidebar,
   SidebarContent,
@@ -33,18 +42,27 @@ import {
 import { useSignOut } from "@/features/platform/auth/api";
 import { useAuthStore } from "@/features/platform/auth/store";
 
-const nav = [
+const allNav: { href: string; label: string; icon: typeof Store; perm?: PermCode }[] = [
   { href: "/platform/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/platform/tenants", label: "Shops", icon: Store },
   { href: "/platform/plans", label: "Plans", icon: CreditCard },
+  { href: "/platform/billing", label: "Billing", icon: Wallet },
+  { href: "/platform/support", label: "Support", icon: LifeBuoy },
+  { href: "/platform/announcements", label: "Announcements", icon: Megaphone },
+  { href: "/platform/notifications", label: "Notifications", icon: Send },
+  { href: "/platform/ops", label: "Operations", icon: Wrench },
   { href: "/platform/settings", label: "Settings", icon: SlidersHorizontal },
-  { href: "/platform/logs", label: "Logs", icon: ScrollText },
+  { href: "/platform/logs", label: "Logs", icon: ScrollText, perm: Perm.LogsView },
   { href: "/platform/admins", label: "Admin", icon: ShieldCheck },
+  { href: "/platform/roles", label: "Roles", icon: KeyRound },
 ];
 
 export function AppSidebar() {
   const path = usePathname();
   const signOut = useSignOut();
+  const can = useCan();
+  const { data: openTickets } = useOpenTicketCount();
+  const nav = allNav.filter((n) => !n.perm || can(n.perm));
   const admin = useAuthStore((s) => s.admin);
   const name = admin?.fullName || admin?.email || "Admin";
   const email = admin?.fullName ? admin?.email : undefined;
@@ -117,6 +135,11 @@ export function AppSidebar() {
                 >
                   <Icon className="h-5 w-5 shrink-0 transition-colors duration-300 group-data-active/nav:text-sidebar-primary" />
                   {label}
+                  {href === "/platform/support" && Boolean(openTickets) && (
+                    <span className="ml-auto rounded-full bg-sidebar-primary px-2 py-0.5 text-xs font-semibold text-sidebar-primary-foreground">
+                      {openTickets}
+                    </span>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
@@ -146,6 +169,9 @@ export function AppSidebar() {
             <ChevronDown className="h-4 w-4 shrink-0 text-sidebar-foreground/60" />
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-56">
+            <DropdownMenuItem render={<Link href="/platform/security" />} className="cursor-pointer">
+              <Lock /> Security (2FA)
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={signOut} className="cursor-pointer">
               <LogOut /> Sign out
             </DropdownMenuItem>

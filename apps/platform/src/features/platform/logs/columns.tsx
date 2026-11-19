@@ -1,7 +1,7 @@
 import { Badge } from "@sellerhub/ui/components/badge";
 import { fmtDate } from "@sellerhub/ui/lib/dayjs";
 import type { AppColumnDef } from "@sellerhub/ui/lib/table";
-import type { AuditLog, ErrorLog, LoginLog } from "./api";
+import type { AuditLog, ErrorLog, ImpersonationLog, LoginLog } from "./api";
 
 const clip = (value: string | null, length = 60) =>
   value
@@ -53,6 +53,17 @@ export const auditColumns = (
         <code className="text-xs">{clip(getValue<string | null>())}</code>
       ),
     },
+    {
+      id: "actor",
+      header: "By",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const { actorType, impersonatorAdminId } = row.original;
+        if (impersonatorAdminId) return <Badge variant="destructive">Admin as shop</Badge>;
+        if (actorType == null) return "-";
+        return <Badge variant="outline">{actorLabel[actorType] ?? "-"}</Badge>;
+      },
+    },
     { id: "ip", header: "IP", accessorKey: "ipAddress", enableSorting: false },
     {
       id: "correlation",
@@ -61,6 +72,29 @@ export const auditColumns = (
       enableSorting: false,
     },
   ];
+
+const actorLabel: Record<number, string> = { 1: "Shop user", 2: "Platform admin", 3: "System" };
+
+export const impersonationColumns = (): AppColumnDef<ImpersonationLog>[] => [
+  {
+    id: "startedAtUtc",
+    header: "Started",
+    accessorKey: "startedAtUtc",
+    enableSorting: false,
+    cell: ({ getValue }) => fmtDate(getValue<string>()),
+  },
+  { id: "admin", header: "Admin", enableSorting: false, accessorFn: (r) => r.adminName ?? r.adminId },
+  { id: "tenant", header: "Shop", enableSorting: false, accessorFn: (r) => r.tenantName ?? r.tenantId },
+  { id: "reason", header: "Reason", accessorKey: "reason", enableSorting: false, cell: ({ getValue }) => clip(getValue<string>(), 80) },
+  {
+    id: "expiresAtUtc",
+    header: "Token until",
+    accessorKey: "expiresAtUtc",
+    enableSorting: false,
+    cell: ({ getValue }) => fmtDate(getValue<string>()),
+  },
+  { id: "ip", header: "IP", accessorKey: "ipAddress", enableSorting: false },
+];
 
 export const loginColumns = (
   onSelect: (log: LoginLog) => void,
