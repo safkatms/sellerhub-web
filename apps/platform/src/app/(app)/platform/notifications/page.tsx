@@ -1,5 +1,4 @@
-import { NotificationsPage } from "@/features/platform/communication/notifications-page";
-
+import { redirect } from "next/navigation";
 export default function Page() {
-  return <NotificationsPage />;
+  redirect("/platform/notifications/messages");
 }

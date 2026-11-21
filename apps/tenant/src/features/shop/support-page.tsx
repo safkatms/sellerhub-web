@@ -238,14 +238,17 @@ function TicketView({ id, onBack }: { id: string; onBack: () => void }) {
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full"
+          className="rounded-full lg:hidden"
           onClick={onBack}
           aria-label="Back"
         >
           <ArrowLeft className="size-5" />
         </Button>
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <Headphones className="size-5" />
+        </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-lg font-semibold">{t.subject}</div>
+          <div className="truncate text-base font-semibold">{t.subject}</div>
           <div className="truncate text-xs text-muted-foreground">
             {t.number} · Opened {fmtDate(t.createdAtUtc)}
           </div>
@@ -261,7 +264,7 @@ function TicketView({ id, onBack }: { id: string; onBack: () => void }) {
       <ScrollArea className="min-h-0 flex-1">
         <div className="space-y-5 px-5 py-4">
           {groups.map((g) => (
-            <div key={g.key} className="space-y-4">
+            <div key={g.key} className="space-y-3">
               <div className="flex items-center gap-3">
                 <Separator className="flex-1" />
                 <Badge
@@ -274,17 +277,18 @@ function TicketView({ id, onBack }: { id: string; onBack: () => void }) {
               </div>
               {g.items.map((msg) => {
                 const support = msg.authorType === 2;
+                const mine = !support;
                 const name = support
                   ? `SellerHub support${msg.authorName ? ` (${msg.authorName})` : ""}`
                   : (msg.authorName ?? "You");
                 return (
                   <div
                     key={msg.id}
-                    className={`flex items-start gap-3 ${support ? "flex-row-reverse" : ""}`}
+                    className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}
                   >
-                    <Avatar className="size-9">
+                    <Avatar className="size-8">
                       <AvatarFallback
-                        className={`text-xs font-semibold text-primary ${support ? "bg-primary/20" : "bg-primary/10"}`}
+                        className={`text-xs font-semibold text-primary ${mine ? "bg-primary/20" : "bg-primary/10"}`}
                       >
                         {initials(
                           support ? (msg.authorName ?? "Support") : name,
@@ -292,18 +296,25 @@ function TicketView({ id, onBack }: { id: string; onBack: () => void }) {
                       </AvatarFallback>
                     </Avatar>
                     <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${support ? "bg-primary/10" : "border bg-background"}`}
+                      className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
+                        mine
+                          ? "rounded-br-sm bg-primary text-primary-foreground"
+                          : "rounded-bl-sm border bg-background"
+                      }`}
                     >
-                      <div className="mb-0.5 text-xs text-muted-foreground">
-                        {name} · {fmtTime(msg.createdAtUtc)}
-                      </div>
-                      <div className="flex items-end gap-2">
-                        <p className="whitespace-pre-wrap wrap-break-word">
-                          {msg.body}
-                        </p>
-                        {support && (
-                          <CheckCheck className="size-4 shrink-0 text-primary" />
-                        )}
+                      {!mine && (
+                        <div className="mb-0.5 text-xs font-medium text-primary">
+                          {name}
+                        </div>
+                      )}
+                      <p className="whitespace-pre-wrap wrap-break-word">
+                        {msg.body}
+                      </p>
+                      <div
+                        className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+                      >
+                        {fmtTime(msg.createdAtUtc)}
+                        {mine && <CheckCheck className="size-3.5" />}
                       </div>
                     </div>
                   </div>
@@ -411,7 +422,10 @@ function NewRequestDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Topic</Label>
-            <Select value={category} onValueChange={(v) => v != null && setCategory(v)}>
+            <Select
+              value={category}
+              onValueChange={(v) => v != null && setCategory(v)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -426,7 +440,11 @@ function NewRequestDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Priority</Label>
-            <Select items={priorityLabel} value={priority} onValueChange={(v) => v != null && setPriority(v)}>
+            <Select
+              items={priorityLabel}
+              value={priority}
+              onValueChange={(v) => v != null && setPriority(v)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>

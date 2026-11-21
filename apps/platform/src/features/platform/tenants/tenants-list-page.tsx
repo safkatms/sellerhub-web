@@ -5,7 +5,7 @@ import type { SortingState } from "@tanstack/react-table";
 import { Input } from "@sellerhub/ui/components/input";
 import { Button } from "@sellerhub/ui/components/button";
 import { DataTable } from "@sellerhub/ui/data-table";
-import { Perm, useCan } from "@/features/platform/access/api";
+import { Perm, useCan } from "@/features/platform/roles/api";
 import { useTags } from "@/features/platform/crm/api";
 import { useTenants } from "./api";
 import { tenantColumns } from "./columns";
@@ -65,7 +65,10 @@ export function TenantsListPage() {
           )}
         </div>
         {can(Perm.TenantManage) && (
-          <Button nativeButton={false} render={<Link href="/platform/tenants/new" />}>
+          <Button
+            nativeButton={false}
+            render={<Link href="/platform/tenants/new" />}
+          >
             New shop
           </Button>
         )}

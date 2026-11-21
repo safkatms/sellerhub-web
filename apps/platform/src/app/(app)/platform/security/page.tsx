@@ -1,4 +1,4 @@
-import { SecurityPage } from "@/features/platform/access/security-page";
+import { SecurityPage } from "@/features/platform/security/security-page";
 
 export default function Page() {
   return <SecurityPage />;

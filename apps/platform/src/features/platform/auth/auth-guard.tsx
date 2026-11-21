@@ -1,9 +1,9 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { PageSpinner } from "@sellerhub/ui/components/sellerhub-spinner";
 import { useAuthHydrated, useAuthStore } from "./store";
 
-/** Client-side gate for the authenticated area: renders nothing until a session is known to exist. */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const hydrated = useAuthHydrated();
@@ -13,6 +13,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     if (hydrated && !token) router.replace("/login");
   }, [hydrated, token, router]);
 
-  if (!hydrated || !token) return null;
-  return children;
+  if (!hydrated || !token) return <PageSpinner />;
+  return <>{children}</>;
 }

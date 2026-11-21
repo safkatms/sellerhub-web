@@ -10,7 +10,12 @@ import { Badge } from "@sellerhub/ui/components/badge";
 import { Button } from "@sellerhub/ui/components/button";
 import { Input } from "@sellerhub/ui/components/input";
 import { Label } from "@sellerhub/ui/components/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@sellerhub/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@sellerhub/ui/components/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +31,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@sellerhub/ui/components/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sellerhub/ui/components/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@sellerhub/ui/components/tabs";
 import { Spinner } from "@sellerhub/ui/components/spinner";
 import {
   Table,
@@ -48,7 +58,7 @@ import { openTenantApp } from "./impersonation";
 import { TenantFeaturesCard, TenantLimitsCard } from "./tenant-entitlements";
 import { TenantBillingCards } from "@/features/platform/billing/tenant-billing";
 import { TenantCrmCards } from "@/features/platform/crm/tenant-crm";
-import { Perm, useCan } from "@/features/platform/access/api";
+import { Perm, useCan } from "@/features/platform/roles/api";
 import { usePlans } from "@/features/platform/plans/api";
 import { applyProblem } from "@sellerhub/api-client/errors";
 import { fmtDate } from "@sellerhub/ui/lib/dayjs";
@@ -86,7 +96,13 @@ type FormInput = z.input<typeof schema>;
 type FormValues = z.output<typeof schema>;
 
 type Props = { id?: string };
-type Tab = "details" | "actions" | "subscriptions" | "billing" | "entitlements" | "crm";
+type Tab =
+  | "details"
+  | "actions"
+  | "subscriptions"
+  | "billing"
+  | "entitlements"
+  | "crm";
 
 const fields: [keyof FormInput, string][] = [
   ["name", "Shop name"],
@@ -261,12 +277,22 @@ export function TenantPage({ id }: Props) {
             <div>Expires: {fmtDate(tenant.planExpiresAtUtc)}</div>
             <div>Users: {tenant.userCount}</div>
             <div>Owner: {tenant.owner?.fullName ?? "-"}</div>
-            {tenant.source && <div>Source: {tenant.source}{tenant.referredBy ? ` (via ${tenant.referredBy})` : ""}</div>}
-            {tenant.status === TenantStatus.Suspended && tenant.suspendReason && (
-              <div className="text-destructive sm:col-span-2">Suspended: {tenant.suspendReason}</div>
+            {tenant.source && (
+              <div>
+                Source: {tenant.source}
+                {tenant.referredBy ? ` (via ${tenant.referredBy})` : ""}
+              </div>
             )}
+            {tenant.status === TenantStatus.Suspended &&
+              tenant.suspendReason && (
+                <div className="text-destructive sm:col-span-2">
+                  Suspended: {tenant.suspendReason}
+                </div>
+              )}
             {tenant.status === TenantStatus.Closed && tenant.closedReason && (
-              <div className="text-destructive sm:col-span-2">Closed: {tenant.closedReason}</div>
+              <div className="text-destructive sm:col-span-2">
+                Closed: {tenant.closedReason}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -284,7 +310,9 @@ export function TenantPage({ id }: Props) {
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
           )}
           {!isNew && (
-            <TabsTrigger value="entitlements">Limits &amp; Features</TabsTrigger>
+            <TabsTrigger value="entitlements">
+              Limits &amp; Features
+            </TabsTrigger>
           )}
           {!isNew && <TabsTrigger value="billing">Billing</TabsTrigger>}
           {!isNew && <TabsTrigger value="crm">Notes &amp; Tags</TabsTrigger>}
@@ -408,37 +436,42 @@ export function TenantPage({ id }: Props) {
                   onChange={(event) => setReason(event.target.value)}
                 />
                 <div className="flex flex-wrap gap-2">
-                  {can(Perm.TenantStatus) && tenant.status === TenantStatus.Active && (
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        actions.suspend.mutate(reason || undefined, { onError })
-                      }
-                    >
-                      Suspend
-                    </Button>
-                  )}
-                  {can(Perm.TenantStatus) && tenant.status === TenantStatus.Suspended && (
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        actions.reactivate.mutate(undefined, { onError })
-                      }
-                    >
-                      Reactivate
-                    </Button>
-                  )}
-                  {can(Perm.TenantStatus) && tenant.status !== TenantStatus.Closed && (
-                    <Button
-                      variant="destructive"
-                      onClick={() =>
-                        confirm("Close permanently?") &&
-                        actions.close.mutate(reason || undefined, { onError })
-                      }
-                    >
-                      Close
-                    </Button>
-                  )}
+                  {can(Perm.TenantStatus) &&
+                    tenant.status === TenantStatus.Active && (
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          actions.suspend.mutate(reason || undefined, {
+                            onError,
+                          })
+                        }
+                      >
+                        Suspend
+                      </Button>
+                    )}
+                  {can(Perm.TenantStatus) &&
+                    tenant.status === TenantStatus.Suspended && (
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          actions.reactivate.mutate(undefined, { onError })
+                        }
+                      >
+                        Reactivate
+                      </Button>
+                    )}
+                  {can(Perm.TenantStatus) &&
+                    tenant.status !== TenantStatus.Closed && (
+                      <Button
+                        variant="destructive"
+                        onClick={() =>
+                          confirm("Close permanently?") &&
+                          actions.close.mutate(reason || undefined, { onError })
+                        }
+                      >
+                        Close
+                      </Button>
+                    )}
                   <Button
                     disabled={!can(Perm.TenantPasswordReset)}
                     variant="outline"
@@ -465,7 +498,10 @@ export function TenantPage({ id }: Props) {
                           navigator.clipboard.writeText(result.accessToken);
                           toast.success(
                             `Token for ${result.userName} copied (${result.expiresInSeconds}s)`,
-                            { description: "Set NEXT_PUBLIC_TENANT_APP_URL to open the shop app directly." },
+                            {
+                              description:
+                                "Set NEXT_PUBLIC_TENANT_APP_URL to open the shop app directly.",
+                            },
                           );
                         },
                         onError,
@@ -600,7 +636,10 @@ export function TenantPage({ id }: Props) {
 
         {tenant && (
           <TabsContent value="billing">
-            <TenantBillingCards tenantId={tenant.id} readOnly={tenant.status === TenantStatus.Closed} />
+            <TenantBillingCards
+              tenantId={tenant.id}
+              readOnly={tenant.status === TenantStatus.Closed}
+            />
           </TabsContent>
         )}
 

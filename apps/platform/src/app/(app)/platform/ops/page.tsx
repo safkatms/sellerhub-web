@@ -1,5 +1,5 @@
-import { OpsPage } from "@/features/platform/ops/ops-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <OpsPage />;
+  redirect("/platform/ops/data-requests");
 }

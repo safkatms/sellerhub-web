@@ -1,48 +1,56 @@
+import Link from "next/link";
 import { Badge } from "@sellerhub/ui/components/badge";
-import { Button } from "@sellerhub/ui/components/button";
 import { fmtDate } from "@sellerhub/ui/lib/dayjs";
-import { PlatformAdminStatus } from "@/lib/enums";
 import type { AppColumnDef } from "@sellerhub/ui/lib/table";
 import type { AdminItem } from "./api";
 
-type ToggleAdmin = {
-  mutate: (
-    value: { id: string; enable: boolean },
-    options: { onError: (error: unknown) => void },
-  ) => void;
-};
-
-export type AdminActions = {
-  toggle: ToggleAdmin;
-  onError: (error: unknown) => void;
-  onAccess: (admin: AdminItem) => void;
-  onResetTwoFactor: (admin: AdminItem) => void;
-  /** admin.manage */
-  canManage: boolean;
-  /** super admins can reset another admin's 2FA */
-  canResetTwoFactor: boolean;
-  meId: string | undefined;
-};
-
-export const adminColumns = (a: AdminActions): AppColumnDef<AdminItem>[] => [
-  { id: "fullName", header: "Name", accessorKey: "fullName" },
+export const adminColumns: AppColumnDef<AdminItem>[] = [
+  {
+    id: "fullName",
+    header: "Name",
+    accessorKey: "fullName",
+    cell: ({ row }) => (
+      <Link className="underline" href={`/platform/admins/${row.original.id}`}>
+        {row.original.fullName}
+      </Link>
+    ),
+  },
   { id: "email", header: "Email", accessorKey: "email" },
+  {
+    id: "status",
+    header: "Status",
+    accessorKey: "status",
+    cell: ({ row }) => (
+      <Badge variant={row.original.status === 1 ? "default" : "secondary"}>
+        {row.original.status === 1 ? "Active" : "Disabled"}
+      </Badge>
+    ),
+  },
   {
     id: "roles",
     header: "Access",
+    accessorKey: "roles",
     enableSorting: false,
     cell: ({ row }) => {
-      const admin = row.original;
-      if (admin.isSuperAdmin) return <Badge>Super admin</Badge>;
-      const roles = admin.roles ?? [];
-      return roles.length === 0
-        ? <span className="text-sm text-muted-foreground">View only</span>
-        : <div className="flex flex-wrap gap-1">{roles.map((r) => <Badge key={r} variant="outline">{r}</Badge>)}</div>;
+      const a = row.original;
+      if (a.isSuperAdmin) return <Badge>Super admin</Badge>;
+      return a.roles?.length ? (
+        <div className="flex flex-wrap gap-1">
+          {a.roles.map((r) => (
+            <Badge key={r} variant="outline">
+              {r}
+            </Badge>
+          ))}
+        </div>
+      ) : (
+        <span className="text-xs text-muted-foreground">View only</span>
+      );
     },
   },
   {
     id: "twoFactor",
     header: "2FA",
+    accessorKey: "twoFactorEnabled",
     enableSorting: false,
     cell: ({ row }) => (
       <Badge variant={row.original.twoFactorEnabled ? "default" : "outline"}>
@@ -51,51 +59,14 @@ export const adminColumns = (a: AdminActions): AppColumnDef<AdminItem>[] => [
     ),
   },
   {
-    id: "status",
-    header: "Status",
-    accessorKey: "status",
-    cell: ({ getValue }) => {
-      const active = getValue<number>() === PlatformAdminStatus.Active;
-      return (
-        <Badge variant={active ? "default" : "secondary"}>
-          {active ? "Active" : "Disabled"}
-        </Badge>
-      );
-    },
-  },
-  {
     id: "lastLoginAtUtc",
     header: "Last login",
     accessorKey: "lastLoginAtUtc",
-    cell: ({ getValue }) => fmtDate(getValue<string | null>()),
-  },
-  {
-    id: "actions",
-    header: "",
-    enableSorting: false,
-    cell: ({ row }) => {
-      const admin = row.original;
-      const active = admin.status === PlatformAdminStatus.Active;
-      const isMe = admin.id === a.meId;
-      return (
-        <div className="flex justify-end gap-2">
-          <Button size="sm" variant="outline" onClick={() => a.onAccess(admin)}>
-            {a.canManage ? "Access" : "View access"}
-          </Button>
-          {a.canResetTwoFactor && admin.twoFactorEnabled && !isMe && (
-            <Button size="sm" variant="ghost" onClick={() => a.onResetTwoFactor(admin)}>Reset 2FA</Button>
-          )}
-          {a.canManage && !isMe && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => a.toggle.mutate({ id: admin.id, enable: !active }, { onError: a.onError })}
-            >
-              {active ? "Disable" : "Enable"}
-            </Button>
-          )}
-        </div>
-      );
-    },
+    cell: ({ row }) =>
+      row.original.lastLoginAtUtc ? (
+        <span className="text-xs">{fmtDate(row.original.lastLoginAtUtc)}</span>
+      ) : (
+        <span className="text-xs text-muted-foreground">Never</span>
+      ),
   },
 ];

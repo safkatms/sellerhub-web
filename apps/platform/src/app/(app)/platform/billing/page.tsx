@@ -1,5 +1,5 @@
-import { BillingPage } from "@/features/platform/billing/billing-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <BillingPage />;
+  redirect("/platform/billing/requests");
 }

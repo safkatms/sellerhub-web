@@ -22,29 +22,47 @@ export const money = (amount: number | null | undefined, currency = "BDT") =>
 
 export type PlanPrice = { months: number; price: number; currency: string; isActive: boolean };
 export type PlanOption = { planId: number; code: string; name: string; description: string | null; prices: PlanPrice[] };
-export type BillingOverview = { planId: number; planName: string; planExpiresAtUtc: string | null; planState: string; currency: string;
-    paymentInstructions: string | null; plans: PlanOption[] };
-export type Quote = { planId: number; planName: string; months: number; subtotal: number; discount: number; total: number;
-    currency: string; couponCode: string | null; couponError: string | null };
-export type ShopPaymentRequest = { id: string; planId: number; planName: string; months: number; amount: number; currency: string;
+export type BillingOverview = {
+    planId: number; planName: string; planExpiresAtUtc: string | null; planState: string; currency: string;
+    paymentInstructions: string | null; plans: PlanOption[]
+};
+export type Quote = {
+    planId: number; planName: string; months: number; subtotal: number; discount: number; total: number;
+    currency: string; couponCode: string | null; couponError: string | null
+};
+export type ShopPaymentRequest = {
+    id: string; planId: number; planName: string; months: number; amount: number; currency: string;
     method: number; transactionId: string; couponCode: string | null; status: number; reviewNote: string | null;
-    invoiceNumber: string | null; createdAtUtc: string };
-export type ShopInvoice = { id: string; number: string; planName: string; months: number; subtotal: number; discount: number;
-    total: number; currency: string; status: number; issuedAtUtc: string; dueAtUtc: string | null; paidAtUtc: string | null };
-export type SubmitPaymentBody = { planId: number; months: number; amount: number; method: number; payerAccount?: string;
-    transactionId: string; couponCode?: string; note?: string };
+    invoiceNumber: string | null; createdAtUtc: string
+};
+export type ShopInvoice = {
+    id: string; number: string; planName: string; months: number; subtotal: number; discount: number;
+    total: number; currency: string; status: number; issuedAtUtc: string; dueAtUtc: string | null; paidAtUtc: string | null
+};
+export type SubmitPaymentBody = {
+    planId: number; months: number; amount: number; method: number; payerAccount?: string;
+    transactionId: string; couponCode?: string; note?: string
+};
 
-export type ShopAnnouncement = { id: string; title: string; body: string; severity: number; isDismissible: boolean;
-    startsAtUtc: string; endsAtUtc: string | null };
+export type ShopAnnouncement = {
+    id: string; title: string; body: string; severity: number; isDismissible: boolean;
+    startsAtUtc: string; endsAtUtc: string | null
+};
 
-export type TicketListItem = { id: string; number: string; subject: string; category: string | null; priority: number; status: number;
-    lastMessageAtUtc: string; createdAtUtc: string };
+export type TicketListItem = {
+    id: string; number: string; subject: string; category: string | null; priority: number; status: number;
+    lastMessageAtUtc: string; createdAtUtc: string
+};
 export type TicketMessage = { id: string; authorType: number; authorName: string | null; body: string; createdAtUtc: string };
-export type Ticket = { id: string; number: string; subject: string; category: string | null; priority: number; status: number;
-    createdAtUtc: string; messages: TicketMessage[] };
+export type Ticket = {
+    id: string; number: string; subject: string; category: string | null; priority: number; status: number;
+    createdAtUtc: string; messages: TicketMessage[]
+};
 
-export type DataRequest = { id: string; kind: number; status: number; reason: string | null; requestedAtUtc: string;
-    processedAtUtc: string | null; resultUrl: string | null; adminNote: string | null; scheduledPurgeAtUtc: string | null };
+export type DataRequest = {
+    id: string; kind: number; status: number; reason: string | null; requestedAtUtc: string;
+    processedAtUtc: string | null; resultUrl: string | null; adminNote: string | null; scheduledPurgeAtUtc: string | null
+};
 
 export type PlatformStatus = { maintenanceMode: boolean; maintenanceMessage: string | null; signupEnabled: boolean };
 
@@ -74,8 +92,10 @@ export const usePaymentMutations = () => {
 // ---------------------------------------------------------------- announcements
 
 export const useAnnouncements = () =>
-    useQuery({ queryKey: ["announcements"], refetchInterval: 5 * 60_000,
-        queryFn: () => api.get<ShopAnnouncement[]>("/api/shop/announcements").then((r) => r.data) });
+    useQuery({
+        queryKey: ["announcements"], refetchInterval: 5 * 60_000,
+        queryFn: () => api.get<ShopAnnouncement[]>("/api/shop/announcements").then((r) => r.data)
+    });
 
 export const useDismissAnnouncement = () => {
     const qc = useQueryClient();
@@ -91,12 +111,16 @@ export const useDismissAnnouncement = () => {
 const chatPollMs = 5_000;
 
 export const useTickets = () =>
-    useQuery({ queryKey: ["support", "list"], refetchInterval: 15_000,
-        queryFn: () => api.get<TicketListItem[]>("/api/shop/support/tickets").then((r) => r.data) });
+    useQuery({
+        queryKey: ["support", "list"], refetchInterval: 15_000,
+        queryFn: () => api.get<TicketListItem[]>("/api/shop/support/tickets").then((r) => r.data)
+    });
 
 export const useTicket = (id: string | null) =>
-    useQuery({ queryKey: ["support", "ticket", id], enabled: Boolean(id), refetchInterval: chatPollMs,
-        queryFn: () => api.get<Ticket>(`/api/shop/support/tickets/${id}`).then((r) => r.data) });
+    useQuery({
+        queryKey: ["support", "ticket", id], enabled: Boolean(id), refetchInterval: chatPollMs,
+        queryFn: () => api.get<Ticket>(`/api/shop/support/tickets/${id}`).then((r) => r.data)
+    });
 
 export const useTicketMutations = () => {
     const qc = useQueryClient();
@@ -136,5 +160,7 @@ export const useDataRequestMutations = () => {
 // ---------------------------------------------------------------- public status (no auth)
 
 export const usePlatformStatus = () =>
-    useQuery({ queryKey: ["platform-status"], staleTime: 60_000, refetchInterval: 2 * 60_000,
-        queryFn: () => axios.get<PlatformStatus>(`${apiBaseURL}/api/status`).then((r) => r.data) });
+    useQuery({
+        queryKey: ["platform-status"], staleTime: 60_000, refetchInterval: 2 * 60_000,
+        queryFn: () => axios.get<PlatformStatus>(`${apiBaseURL}/api/status`).then((r) => r.data)
+    });

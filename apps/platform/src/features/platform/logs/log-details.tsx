@@ -1,4 +1,7 @@
 "use client";
+import { useState } from "react";
+import { Check, Copy } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@sellerhub/ui/components/button";
 import {
   Dialog,
@@ -13,20 +16,86 @@ import { cn } from "@sellerhub/ui/lib/utils";
 import { fmtDate } from "@sellerhub/ui/lib/dayjs";
 import { useErrorLog, type AuditLog, type LoginLog } from "./api";
 
+async function copyToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // Fallback for non-secure contexts or blocked clipboard access.
+    const el = document.createElement("textarea");
+    el.value = text;
+    el.style.position = "fixed";
+    el.style.opacity = "0";
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand("copy");
+    document.body.removeChild(el);
+  }
+}
+
+function CopyButton({
+  value,
+  label,
+  className,
+}: {
+  value: string | null | undefined;
+  label: string;
+  className?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  if (!value) return null;
+  return (
+    <button
+      type="button"
+      aria-label={`Copy ${label}`}
+      title={`Copy ${label}`}
+      className={cn(
+        "inline-flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        className,
+      )}
+      onClick={async () => {
+        await copyToClipboard(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+    >
+      {copied ? (
+        <Check className="size-3.5 text-emerald-600" />
+      ) : (
+        <Copy className="size-3.5" />
+      )}
+    </button>
+  );
+}
+
+const text = (v: unknown) => (v === null || v === undefined ? "" : String(v));
+
+/** Plain-text export of label/value rows; empty values are skipped. */
+const toText = (rows: [string, unknown][]) =>
+  rows
+    .filter(([, v]) => text(v) !== "")
+    .map(([k, v]) => `${k}: ${text(v)}`)
+    .join("\n");
+
 function Field({
   label,
   children,
+  copy,
   wide,
   mono,
 }: {
   label: string;
   children: React.ReactNode;
+  /** Raw value to copy; omit to hide the copy button. */
+  copy?: string | number | null;
   wide?: boolean;
   mono?: boolean;
 }) {
   return (
     <div className={cn(wide && "sm:col-span-2")}>
-      <dt className="font-medium text-muted-foreground">{label}</dt>
+      <dt className="flex items-center gap-1 font-medium text-muted-foreground">
+        {label}
+        <CopyButton value={text(copy)} label={label} />
+      </dt>
       <dd className={cn("break-all", mono && "font-mono text-xs")}>
         {children ?? "-"}
       </dd>
@@ -37,8 +106,11 @@ function Field({
 function Block({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <p className="font-medium text-muted-foreground">{label}</p>
-      <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-3 text-xs">
+      <p className="flex items-center gap-1 font-medium text-muted-foreground">
+        {label}
+        <CopyButton value={value} label={label} />
+      </p>
+      <pre className="mt-1 max-h-48 overflow-auto rounded bg-muted p-3 text-xs break-words whitespace-pre-wrap">
         {value ?? "-"}
       </pre>
     </div>
@@ -50,12 +122,15 @@ function LogDialog({
   onClose,
   title,
   description,
+  copyAll,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   description: string;
+  /** Text copied by the "Copy all" button; hidden when empty. */
+  copyAll?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -76,6 +151,17 @@ function LogDialog({
           </div>
         )}
         <DialogFooter>
+          {copyAll && (
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await copyToClipboard(copyAll);
+                toast.success("Copied");
+              }}
+            >
+              <Copy /> Copy all
+            </Button>
+          )}
           <DialogClose render={<Button variant="outline" />}>Close</DialogClose>
         </DialogFooter>
       </DialogContent>
@@ -95,20 +181,55 @@ export function AuditLogDialog({
       open={log !== null}
       onClose={onClose}
       title="Audit log details"
-      description={log ? `Audit #${log.id} · ${log.action}` : "Loading audit details..."}
+      description={
+        log ? `Audit #${log.id} · ${log.action}` : "Loading audit details..."
+      }
+      copyAll={
+        log
+          ? toText([
+              ["ID", log.id],
+              ["Created", fmtDate(log.createdAtUtc)],
+              ["Action", log.action],
+              ["Entity", log.entityName],
+              ["Entity ID", log.entityId],
+              ["Tenant ID", log.tenantId],
+              ["User ID", log.userId],
+              ["IP", log.ipAddress],
+              ["Correlation ID", log.correlationId],
+              ["Old values", log.oldValues],
+              ["New values", log.newValues],
+            ])
+          : undefined
+      }
     >
       {log && (
         <>
           <dl className="grid gap-2 sm:grid-cols-2">
-            <Field label="ID">{log.id}</Field>
-            <Field label="Created">{fmtDate(log.createdAtUtc)}</Field>
-            <Field label="Action">{log.action}</Field>
-            <Field label="Entity">{log.entityName}</Field>
-            <Field label="Entity ID">{log.entityId}</Field>
-            <Field label="Tenant ID">{log.tenantId}</Field>
-            <Field label="User ID">{log.userId}</Field>
-            <Field label="IP">{log.ipAddress}</Field>
-            <Field label="Correlation ID" wide mono>
+            <Field label="ID" copy={log.id}>
+              {log.id}
+            </Field>
+            <Field label="Created" copy={fmtDate(log.createdAtUtc)}>
+              {fmtDate(log.createdAtUtc)}
+            </Field>
+            <Field label="Action" copy={log.action}>
+              {log.action}
+            </Field>
+            <Field label="Entity" copy={log.entityName}>
+              {log.entityName}
+            </Field>
+            <Field label="Entity ID" copy={log.entityId}>
+              {log.entityId}
+            </Field>
+            <Field label="Tenant ID" copy={log.tenantId}>
+              {log.tenantId}
+            </Field>
+            <Field label="User ID" copy={log.userId}>
+              {log.userId}
+            </Field>
+            <Field label="IP" copy={log.ipAddress}>
+              {log.ipAddress}
+            </Field>
+            <Field label="Correlation ID" copy={log.correlationId} wide mono>
               {log.correlationId}
             </Field>
           </dl>
@@ -132,20 +253,55 @@ export function LoginLogDialog({
       open={log !== null}
       onClose={onClose}
       title="Login log details"
-      description={log ? `Login #${log.id} · ${log.identifier}` : "Loading login details..."}
+      description={
+        log
+          ? `Login #${log.id} · ${log.identifier}`
+          : "Loading login details..."
+      }
+      copyAll={
+        log
+          ? toText([
+              ["ID", log.id],
+              ["Created", fmtDate(log.createdAtUtc)],
+              ["Identifier", log.identifier],
+              ["Result", log.isSuccess ? "Success" : "Failed"],
+              ["Tenant ID", log.tenantId],
+              ["User ID", log.userId],
+              ["Device", log.deviceName],
+              ["IP", log.ipAddress],
+              ["Correlation ID", log.correlationId],
+              ["Failure reason", log.failureReason],
+              ["User agent", log.userAgent],
+            ])
+          : undefined
+      }
     >
       {log && (
         <>
           <dl className="grid gap-2 sm:grid-cols-2">
-            <Field label="ID">{log.id}</Field>
-            <Field label="Created">{fmtDate(log.createdAtUtc)}</Field>
-            <Field label="Identifier">{log.identifier}</Field>
+            <Field label="ID" copy={log.id}>
+              {log.id}
+            </Field>
+            <Field label="Created" copy={fmtDate(log.createdAtUtc)}>
+              {fmtDate(log.createdAtUtc)}
+            </Field>
+            <Field label="Identifier" copy={log.identifier}>
+              {log.identifier}
+            </Field>
             <Field label="Result">{log.isSuccess ? "Success" : "Failed"}</Field>
-            <Field label="Tenant ID">{log.tenantId}</Field>
-            <Field label="User ID">{log.userId}</Field>
-            <Field label="Device">{log.deviceName}</Field>
-            <Field label="IP">{log.ipAddress}</Field>
-            <Field label="Correlation ID" wide mono>
+            <Field label="Tenant ID" copy={log.tenantId}>
+              {log.tenantId}
+            </Field>
+            <Field label="User ID" copy={log.userId}>
+              {log.userId}
+            </Field>
+            <Field label="Device" copy={log.deviceName}>
+              {log.deviceName}
+            </Field>
+            <Field label="IP" copy={log.ipAddress}>
+              {log.ipAddress}
+            </Field>
+            <Field label="Correlation ID" copy={log.correlationId} wide mono>
               {log.correlationId}
             </Field>
           </dl>
@@ -171,24 +327,57 @@ export function ErrorLogDialog({
       open={id !== null}
       onClose={onClose}
       title="Error details"
-      description={log ? `Error #${log.id} · ${log.traceId}` : "Loading error details..."}
+      description={
+        log ? `Error #${log.id} · ${log.traceId}` : "Loading error details..."
+      }
+      copyAll={
+        log
+          ? toText([
+              ["ID", log.id],
+              ["Trace ID", log.traceId],
+              ["Created", fmtDate(log.createdAtUtc)],
+              ["Tenant ID", log.tenantId],
+              ["User ID", log.userId],
+              ["Method", log.httpMethod],
+              ["Path", log.path],
+              ["Status", log.statusCode],
+              ["Error code", log.errorCode],
+              ["Message", log.message],
+              ["Details", log.details],
+            ])
+          : undefined
+      }
     >
       {log && (
         <>
           <dl className="grid gap-2 sm:grid-cols-2">
-            <Field label="ID">{log.id}</Field>
-            <Field label="Trace ID" mono>
+            <Field label="ID" copy={log.id}>
+              {log.id}
+            </Field>
+            <Field label="Trace ID" copy={log.traceId} mono>
               {log.traceId}
             </Field>
-            <Field label="Tenant ID">{log.tenantId}</Field>
-            <Field label="User ID">{log.userId}</Field>
-            <Field label="Method">{log.httpMethod}</Field>
-            <Field label="Status">{log.statusCode}</Field>
-            <Field label="Path" wide>
+            <Field label="Tenant ID" copy={log.tenantId}>
+              {log.tenantId}
+            </Field>
+            <Field label="User ID" copy={log.userId}>
+              {log.userId}
+            </Field>
+            <Field label="Method" copy={log.httpMethod}>
+              {log.httpMethod}
+            </Field>
+            <Field label="Status" copy={log.statusCode}>
+              {log.statusCode}
+            </Field>
+            <Field label="Path" copy={log.path} wide>
               {log.path}
             </Field>
-            <Field label="Error code">{log.errorCode}</Field>
-            <Field label="Created">{fmtDate(log.createdAtUtc)}</Field>
+            <Field label="Error code" copy={log.errorCode}>
+              {log.errorCode}
+            </Field>
+            <Field label="Created" copy={fmtDate(log.createdAtUtc)}>
+              {fmtDate(log.createdAtUtc)}
+            </Field>
           </dl>
           <Block label="Message" value={log.message} />
           <Block label="Details" value={log.details} />

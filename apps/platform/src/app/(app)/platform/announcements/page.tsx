@@ -1,5 +1,5 @@
-import { AnnouncementsPage } from "@/features/platform/communication/announcements-page";
+import { AnnouncementsListPage } from "@/features/platform/announcements/announcements-list-page";
 
 export default function Page() {
-  return <AnnouncementsPage />;
+  return <AnnouncementsListPage />;
 }
