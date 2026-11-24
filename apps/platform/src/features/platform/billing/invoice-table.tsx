@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@sellerhub/ui/components/button";
 import {
@@ -17,6 +17,8 @@ import { DataTable } from "@sellerhub/ui/data-table";
 import { applyProblem } from "@sellerhub/api-client/errors";
 import { Perm, useCan } from "@/features/platform/roles/api";
 import {
+  DateRange,
+  InvoiceQuery,
   invoiceStatusLabel,
   money,
   useInvoiceMutations,
@@ -28,7 +30,15 @@ import { invoiceColumns } from "./columns";
 const pageSize = 20;
 const select = "h-9 rounded-md border bg-background px-2 text-sm";
 
-export function InvoiceTable({ tenantId }: { tenantId?: string }) {
+export function InvoiceTable({
+  tenantId,
+  params,
+  resetKey,
+}: {
+  tenantId?: string;
+  params?: Record<string, unknown>;
+  resetKey?: string;
+}) {
   const can = useCan();
   const [status, setStatus] = useState<number | undefined>();
   const [page, setPage] = useState(1);
@@ -36,10 +46,13 @@ export function InvoiceTable({ tenantId }: { tenantId?: string }) {
   const { data, isLoading } = useInvoices({
     page,
     pageSize,
-    status,
     tenantId,
-    search: search || undefined,
-  });
+    ...params,
+    status: params?.status ? Number(params.status) : undefined,
+  } as InvoiceQuery);
+
+  useEffect(() => setPage(1), [resetKey]);
+
   const m = useInvoiceMutations();
   const [dialog, setDialog] = useState<{
     invoice: Invoice;

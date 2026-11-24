@@ -13,7 +13,9 @@
     "./lib/*": "./src/lib/*.ts",
     "./data-table": "./src/data-table.tsx",
     "./display-zone": "./src/display-zone.tsx",
-    "./time-zone-select": "./src/time-zone-select.tsx"
+    "./time-zone-select": "./src/time-zone-select.tsx",
+    "./date-range-filter": "./src/date-range-filter.tsx",
+    "./filters": "./src/filters.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

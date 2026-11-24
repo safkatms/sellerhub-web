@@ -52,16 +52,16 @@ export function DataTable<T extends RowData>({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-md border">
+      <div className="panel overflow-hidden">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-secondary [&_tr]:border-b">
             {table.getHeaderGroups().map((g) => (
               <TableRow key={g.id}>
                 {g.headers.map((h) => (
                   <TableHead
                     key={h.id}
                     onClick={h.column.getToggleSortingHandler()}
-                    className="cursor-pointer select-none"
+                    className="h-12 cursor-pointer select-none px-4 text-sm font-semibold text-secondary-foreground"
                   >
                     <table.FlexRender header={h} />
                     {{ asc: " ↑", desc: " ↓" }[
@@ -75,7 +75,10 @@ export function DataTable<T extends RowData>({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   <Spinner className="mx-auto" />
                 </TableCell>
               </TableRow>

@@ -10,6 +10,7 @@ export const InvoiceStatus = { Unpaid: 1, Paid: 2, Void: 3 } as const;
 export const invoiceStatusLabel: Record<number, string> = { 1: "Unpaid", 2: "Paid", 3: "Void" };
 export const CouponDiscountType = { Percent: 1, Fixed: 2 } as const;
 export const billingMonths = [1, 3, 6, 12] as const;
+export type DateRange = { fromUtc?: string; toUtc?: string };
 
 export const money = (amount: number | null | undefined, currency = "BDT") =>
     amount == null ? "-" : `${currency === "BDT" ? "৳" : `${currency} `}${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
@@ -23,8 +24,10 @@ export type Coupon = {
     validFromUtc: string | null; validToUtc: string | null; isActive: boolean; createdAtUtc: string; rowVersion: string;
 };
 export type SaveCouponBody = Omit<Coupon, "id" | "redeemedCount" | "createdAtUtc" | "rowVersion"> & { rowVersion: string | null };
-export type Quote = { planId: number; planName: string; months: number; subtotal: number; discount: number; total: number;
-    currency: string; couponCode: string | null; couponError: string | null };
+export type Quote = {
+    planId: number; planName: string; months: number; subtotal: number; discount: number; total: number;
+    currency: string; couponCode: string | null; couponError: string | null
+};
 export type Invoice = {
     id: string; number: string; tenantId: string; tenantName: string; planId: number; planName: string; months: number;
     subtotal: number; discount: number; total: number; currency: string; status: number; couponId: string | null;
@@ -37,8 +40,10 @@ export type PaymentRequestItem = {
     couponCode: string | null; note: string | null; status: number; reviewedBy: string | null; reviewedAtUtc: string | null;
     reviewNote: string | null; invoiceId: string | null; invoiceNumber: string | null; createdAtUtc: string; rowVersion: string;
 };
-export type TenantCredit = { id: string; days: number; reason: string; previousExpiresAtUtc: string | null; newExpiresAtUtc: string;
-    createdAtUtc: string; createdBy: string | null };
+export type TenantCredit = {
+    id: string; days: number; reason: string; previousExpiresAtUtc: string | null; newExpiresAtUtc: string;
+    createdAtUtc: string; createdBy: string | null
+};
 export type BillingSummary = { pendingPaymentRequests: number; unpaidInvoices: number; paidThisMonth: number; currency: string };
 
 const b = "/api/platform";
@@ -53,12 +58,17 @@ const useInvalidate = () => {
 
 // ---------------------------------------------------------------- hooks
 
-export const useBillingSummary = () =>
-    useQuery({ queryKey: [...key, "summary"], queryFn: () => api.get<BillingSummary>(`${b}/billing/summary`).then((r) => r.data) });
+export const useBillingSummary = (range: DateRange = {}) =>
+    useQuery({
+        queryKey: [...key, "summary", range], placeholderData: keepPreviousData,
+        queryFn: () => api.get<BillingSummary>(`${b}/billing/summary`, { params: range }).then((r) => r.data)
+    });
 
 export const usePlanPrices = (planId: number | undefined) =>
-    useQuery({ queryKey: [...key, "prices", planId], enabled: planId !== undefined,
-        queryFn: () => api.get<PlanPrice[]>(`${b}/plans/${planId}/prices`).then((r) => r.data) });
+    useQuery({
+        queryKey: [...key, "prices", planId], enabled: planId !== undefined,
+        queryFn: () => api.get<PlanPrice[]>(`${b}/plans/${planId}/prices`).then((r) => r.data)
+    });
 
 export const useSetPlanPrices = (planId: number) => {
     const qc = useQueryClient();
@@ -86,10 +96,12 @@ export const useCouponMutations = () => {
     };
 };
 
-export type InvoiceQuery = PagedRequest & { tenantId?: string; status?: number };
+export type InvoiceQuery = PagedRequest & { tenantId?: string; status?: number } & DateRange;
 export const useInvoices = (q: InvoiceQuery) =>
-    useQuery({ queryKey: [...key, "invoices", q], placeholderData: keepPreviousData,
-        queryFn: () => api.get<Paged<Invoice>>(`${b}/billing/invoices`, { params: q }).then((r) => r.data) });
+    useQuery({
+        queryKey: [...key, "invoices", q], placeholderData: keepPreviousData,
+        queryFn: () => api.get<Paged<Invoice>>(`${b}/billing/invoices`, { params: q }).then((r) => r.data)
+    });
 
 export const useInvoiceMutations = () => {
     const done = useInvalidate();
@@ -114,8 +126,10 @@ export const useInvoiceMutations = () => {
 
 export type PaymentRequestQuery = PagedRequest & { tenantId?: string; status?: number };
 export const usePaymentRequests = (q: PaymentRequestQuery) =>
-    useQuery({ queryKey: [...key, "requests", q], placeholderData: keepPreviousData,
-        queryFn: () => api.get<Paged<PaymentRequestItem>>(`${b}/billing/payment-requests`, { params: q }).then((r) => r.data) });
+    useQuery({
+        queryKey: [...key, "requests", q], placeholderData: keepPreviousData,
+        queryFn: () => api.get<Paged<PaymentRequestItem>>(`${b}/billing/payment-requests`, { params: q }).then((r) => r.data)
+    });
 
 export const useReviewPayment = () => {
     const done = useInvalidate();
@@ -134,8 +148,10 @@ export const useQuote = () =>
     });
 
 export const useCredits = (tenantId: string) =>
-    useQuery({ queryKey: [...key, "credits", tenantId], enabled: Boolean(tenantId),
-        queryFn: () => api.get<TenantCredit[]>(`${b}/tenants/${tenantId}/credits`).then((r) => r.data) });
+    useQuery({
+        queryKey: [...key, "credits", tenantId], enabled: Boolean(tenantId),
+        queryFn: () => api.get<TenantCredit[]>(`${b}/tenants/${tenantId}/credits`).then((r) => r.data)
+    });
 
 export const useGrantCredit = (tenantId: string) => {
     const done = useInvalidate();

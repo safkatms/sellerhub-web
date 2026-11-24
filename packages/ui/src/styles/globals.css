@@ -315,6 +315,14 @@
 .nav-indicator[data-instant] {
   transition: none;
 }
+@utility panel {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius-2xl);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.03),
+    0 8px 24px -12px color-mix(in oklab, var(--primary) 25%, transparent);
+}
 @media (prefers-reduced-motion: reduce) {
   .nav-indicator {
     transition: opacity 150ms ease;
