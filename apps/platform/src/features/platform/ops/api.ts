@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@sellerhub/api-client/client";
-import type { Paged, PagedRequest } from "@sellerhub/api-client/types";
+import { toListParams, type ListRequest } from "@sellerhub/api-client/query";
+import type { Paged } from "@sellerhub/api-client/types";
 
 export const TicketStatus = { Open: 1, WaitingOnShop: 2, Resolved: 3, Closed: 4 } as const;
 export const ticketStatusLabel: Record<number, string> = { 1: "Open", 2: "Waiting on shop", 3: "Resolved", 4: "Closed" };
@@ -35,13 +36,13 @@ const b = "/api/platform";
 
 // ---------------------------------------------------------------- support
 
-export type TicketQuery = PagedRequest & { status?: number; tenantId?: string; unassigned?: boolean; assignedAdminId?: string };
 /** How often an open conversation checks for new messages (only while the tab is visible). */
 const chatPollMs = 5_000;
 
-export const useTickets = (q: TicketQuery) =>
+/** Filters: tenantId, status, priority, category, assignedAdminId (null:true = unassigned), createdAtUtc, lastMessageAtUtc. */
+export const useTickets = (q: ListRequest) =>
     useQuery({ queryKey: ["support", "list", q], placeholderData: keepPreviousData, refetchInterval: 15_000,
-        queryFn: () => api.get<Paged<TicketListItem>>(`${b}/support/tickets`, { params: q }).then((r) => r.data) });
+        queryFn: () => api.get<Paged<TicketListItem>>(`${b}/support/tickets`, { params: toListParams(q) }).then((r) => r.data) });
 
 export const useOpenTicketCount = () =>
     useQuery({ queryKey: ["support", "open-count"], refetchInterval: 60_000,
@@ -70,10 +71,10 @@ export const useTicketMutations = () => {
 
 // ---------------------------------------------------------------- data requests + jobs + trends
 
-export type DataRequestQuery = PagedRequest & { status?: number; kind?: number };
-export const useDataRequests = (q: DataRequestQuery, enabled = true) =>
+/** Filters: tenantId, status, kind, requestedAtUtc. Search: shop name. Sort: requestedAtUtc, status, kind. */
+export const useDataRequests = (q: ListRequest, enabled = true) =>
     useQuery({ queryKey: ["ops", "data-requests", q], enabled, placeholderData: keepPreviousData,
-        queryFn: () => api.get<Paged<DataRequestItem>>(`${b}/data-requests`, { params: q }).then((r) => r.data) });
+        queryFn: () => api.get<Paged<DataRequestItem>>(`${b}/data-requests`, { params: toListParams(q) }).then((r) => r.data) });
 
 export const useDataRequestMutations = () => {
     const qc = useQueryClient();
@@ -95,9 +96,10 @@ export const useJobs = (enabled = true) =>
     useQuery({ queryKey: ["ops", "jobs"], enabled, refetchInterval: 30_000,
         queryFn: () => api.get<JobInfo[]>(`${b}/jobs`).then((r) => r.data) });
 
-export const useJobRuns = (q: PagedRequest & { jobName?: string; status?: number }, enabled = true) =>
+/** Filters: jobName, status, triggerType, startedAtUtc, itemsProcessed. Search: job name, message. */
+export const useJobRuns = (q: ListRequest, enabled = true) =>
     useQuery({ queryKey: ["ops", "runs", q], enabled, placeholderData: keepPreviousData,
-        queryFn: () => api.get<Paged<JobRun>>(`${b}/jobs/runs`, { params: q }).then((r) => r.data) });
+        queryFn: () => api.get<Paged<JobRun>>(`${b}/jobs/runs`, { params: toListParams(q) }).then((r) => r.data) });
 
 export const useRunJob = () => {
     const qc = useQueryClient();

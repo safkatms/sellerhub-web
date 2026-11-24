@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   CheckCheck,
+  CircleCheck,
   Flag,
   Paperclip,
   Send,
@@ -13,6 +14,8 @@ import {
   Store,
   User,
 } from "lucide-react";
+import { Filters, type FilterDef } from "@sellerhub/ui/filters";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
 import { Badge } from "@sellerhub/ui/components/badge";
 import { Button } from "@sellerhub/ui/components/button";
 import { Checkbox } from "@sellerhub/ui/components/checkbox";
@@ -70,29 +73,41 @@ const dayLabel = (d: string) => {
     : txt;
 };
 
-const statusChips: { key: number | undefined; label: string }[] = [
-  { key: undefined, label: "All" },
-  ...Object.entries(ticketStatusLabel).map(([v, l]) => ({
-    key: Number(v),
-    label: String(l),
-  })),
+const supportDefs = (meId?: string): FilterDef[] => [
+  {
+    key: "status",
+    type: "select",
+    allLabel: "All statuses",
+    defaultValue: String(TicketStatus.Open),
+    options: Object.entries(ticketStatusLabel).map(([value, label]) => ({
+      value,
+      label,
+    })),
+    icon: CircleCheck,
+  },
+  {
+    key: "mine",
+    type: "toggle",
+    label: "Assigned to me",
+    icon: User,
+    toFilter: () =>
+      meId ? { field: "assignedAdminId", op: "eq", value: meId } : undefined,
+  },
+  {
+    key: "search",
+    type: "search",
+    placeholder: "Search number, subject, shop…",
+    className: "col-span-2 w-full max-w-none",
+  },
 ];
 
 /** Support inbox: list on the left, conversation on the right. */
 export function SupportPage() {
   const meId = useAuthStore((s) => s.admin?.id);
-  const [status, setStatus] = useState<number | undefined>(TicketStatus.Open);
-  const [mine, setMine] = useState(false);
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const defs = useMemo(() => supportDefs(meId), [meId]);
+  const list = useServerList({ defs });
   const [openId, setOpenId] = useState<string | null>(null);
-  const { data, isLoading } = useTickets({
-    page,
-    pageSize: 20,
-    status,
-    search: search || undefined,
-    assignedAdminId: mine ? meId : undefined,
-  });
+  const { data, isLoading } = useTickets(list.request);
 
   return (
     <div className="grid h-[calc(100vh-8rem)] min-h-130 gap-4 lg:grid-cols-[380px_1fr]">
@@ -106,39 +121,10 @@ export function SupportPage() {
               {data?.totalCount ?? 0}
             </Badge>
           </div>
-          <Input
-            placeholder="Search number, subject, shop…"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
+          <Filters
+            filters={list.filters}
+            className="grid grid-cols-[minmax(0,1fr)_auto]"
           />
-          <div className="flex flex-wrap gap-2">
-            {statusChips.map((c) => (
-              <button
-                key={c.label}
-                type="button"
-                onClick={() => {
-                  setStatus(c.key);
-                  setPage(1);
-                }}
-                className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${status === c.key ? "border-primary/40 bg-primary/10 text-primary" : "hover:bg-muted"}`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={mine}
-              onCheckedChange={(c) => {
-                setMine(c === true);
-                setPage(1);
-              }}
-            />{" "}
-            Assigned to me
-          </label>
         </div>
 
         <ScrollArea className="min-h-0 flex-1">
@@ -205,10 +191,10 @@ export function SupportPage() {
         </ScrollArea>
         <div className="border-t px-4 py-2">
           <Pager
-            page={page}
-            pageSize={20}
+            page={list.table.page}
+            pageSize={list.table.pageSize}
             total={data?.totalCount ?? 0}
-            onPage={setPage}
+            onPage={list.table.onPageChange}
           />
         </div>
       </section>

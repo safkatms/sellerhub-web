@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@sellerhub/api-client/client";
-import type { Paged, PagedRequest } from "@sellerhub/api-client/types";
+import { toListParams, type ListRequest } from "@sellerhub/api-client/query";
+import type { Paged } from "@sellerhub/api-client/types";
 
 export type TenantListItem = {
     id: string; name: string; slug: string; email: string | null; phone: string | null;
@@ -13,7 +14,6 @@ export type Tenant = Omit<TenantListItem, "createdAtUtc"> & {
     userCount: number; owner: TenantOwner | null; createdAtUtc: string; rowVersion: string;
     suspendReason: string | null; closedReason: string | null; source: string | null; referredBy: string | null;
 };
-export type TenantListQuery = PagedRequest & { status?: number; planId?: number; planState?: number; tagId?: number };
 
 export type CreateTenantBody = {
     name: string; slug?: string; email?: string; phone?: string; timeZone?: string; language?: string; currency?: string; planId?: number;
@@ -26,10 +26,14 @@ export type UpdateTenantBody = {
 const key = ["tenants"] as const;
 const base = "/api/platform/tenants";
 
-export const useTenants = (q: TenantListQuery) =>
+/**
+ * Filters: status, planId, planState, tagId, planExpiresAtUtc, createdAtUtc.
+ * Sort: name, slug, plan, status, expiresAt, createdAt.
+ */
+export const useTenants = (q: ListRequest) =>
     useQuery({
         queryKey: [...key, "list", q],
-        queryFn: () => api.get<Paged<TenantListItem>>(base, { params: q }).then((r) => r.data),
+        queryFn: () => api.get<Paged<TenantListItem>>(base, { params: toListParams(q) }).then((r) => r.data),
         placeholderData: keepPreviousData,
     });
 

@@ -6,7 +6,7 @@ Front ends for SellerHub, as an npm-workspaces monorepo:
 - `apps/tenant`: the shop app for shop owners and staff (http://localhost:3001)
 - `packages/ui`, `packages/api-client`, `packages/config`: code the two apps share
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for layout, layer rules and the auth/impersonation flows.
+See [FRONTEND_ARCHITECTURE.md](../../SellerHub/docs/FRONTEND_ARCHITECTURE.md) (in the backend repo's `docs/`) for layout, layer rules and the auth/impersonation flows.
 
 ## Getting started
 

@@ -1,45 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@sellerhub/ui/components/input";
 import { DataTable } from "@sellerhub/ui/data-table";
+import { Filters, type FilterDef } from "@sellerhub/ui/filters";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
 import { useErrorLogs } from "./api";
 import { errorColumns } from "./columns";
 import { ErrorLogDialog } from "./log-details";
 
-const pageSize = 20;
+const defs: FilterDef[] = [
+  { key: "range", field: "createdAtUtc", type: "date-range" },
+  { key: "statusCode", type: "number-range", label: "Status" },
+  { key: "search", type: "search", placeholder: "Search path/message…" },
+];
 
 export function ErrorLogsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const list = useServerList({ defs });
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const { data, isLoading } = useErrorLogs({
-    page,
-    pageSize,
-    search: search || undefined,
-  });
+  const { data, isLoading } = useErrorLogs(list.request);
 
   return (
     <div className="space-y-4">
-      <Input
-        className="max-w-xs"
-        value={search}
-        placeholder="Search path/message…"
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-      />
+      <Filters filters={list.filters} />
       <DataTable
         columns={errorColumns(setSelectedId)}
         data={data?.items ?? []}
         loading={isLoading}
         total={data?.totalCount ?? 0}
-        page={page}
-        pageSize={pageSize}
-        sorting={[]}
-        onPageChange={setPage}
-        onSortingChange={() => {}}
+        {...list.table}
       />
       <ErrorLogDialog id={selectedId} onClose={() => setSelectedId(null)} />
     </div>

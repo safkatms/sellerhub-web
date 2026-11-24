@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import dayjs, { getDisplayZone } from "./dayjs";
 
 export const rangePresets = {
@@ -39,12 +38,3 @@ export function resolveRange(
         default: return {};
     }
 }
-
-export function useDateRange() {
-    const [preset, setPreset] = useState<RangePreset>("all");
-    const [from, setFrom] = useState("");
-    const [to, setTo] = useState("");
-    const range = useMemo(() => resolveRange(preset, from, to), [preset, from, to]);
-    return { preset, setPreset, from, setFrom, to, setTo, range };
-}
-export type DateRangeState = ReturnType<typeof useDateRange>;

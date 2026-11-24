@@ -34,7 +34,6 @@ export const dataRequestColumns = (
     id: "requestedAtUtc",
     header: "Requested",
     accessorKey: "requestedAtUtc",
-    enableSorting: false,
     cell: ({ row }) => (
       <span className="text-xs">{fmtDate(row.original.requestedAtUtc)}</span>
     ),
@@ -191,7 +190,6 @@ export const jobRunColumns = (
     id: "startedAtUtc",
     header: "Started",
     accessorKey: "startedAtUtc",
-    enableSorting: false,
     cell: ({ row }) => (
       <span className="text-xs">{fmtDate(row.original.startedAtUtc)}</span>
     ),

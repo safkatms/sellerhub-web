@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@sellerhub/api-client/client";
-import type { Paged, PagedRequest } from "@sellerhub/api-client/types";
+import { toListParams, type ListRequest } from "@sellerhub/api-client/query";
+import type { Paged } from "@sellerhub/api-client/types";
 
 export const Channel = { Email: 1, Sms: 2 } as const;
 export const channelLabel: Record<number, string> = { 1: "Email", 2: "SMS" };
@@ -110,13 +111,8 @@ export const useTemplateMutations = () => {
   };
 };
 
-export type MessageQuery = PagedRequest & {
-  tenantId?: string;
-  channel?: number;
-  status?: number;
-};
-
-export const useMessages = (q: MessageQuery, enabled = true) =>
+/** Filters: tenantId, channel, status, createdAtUtc, sentAtUtc. Search: recipient, template code. */
+export const useMessages = (q: ListRequest, enabled = true) =>
   useQuery({
     queryKey: ["notifications", "messages", q],
     enabled,
@@ -124,7 +120,7 @@ export const useMessages = (q: MessageQuery, enabled = true) =>
     queryFn: () =>
       api
         .get<Paged<OutboundMessage>>(`${b}/notifications/messages`, {
-          params: q,
+          params: toListParams(q),
         })
         .then((r) => r.data),
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@sellerhub/ui/components/button";
 import {
@@ -14,44 +14,22 @@ import {
 import { Input } from "@sellerhub/ui/components/input";
 import { Label } from "@sellerhub/ui/components/label";
 import { DataTable } from "@sellerhub/ui/data-table";
+import type { ServerList } from "@sellerhub/ui/hooks/use-server-list";
 import { applyProblem } from "@sellerhub/api-client/errors";
 import { Perm, useCan } from "@/features/platform/roles/api";
-import {
-  DateRange,
-  InvoiceQuery,
-  invoiceStatusLabel,
-  money,
-  useInvoiceMutations,
-  useInvoices,
-  type Invoice,
-} from "./api";
+import { money, useInvoiceMutations, useInvoices, type Invoice } from "./api";
 import { invoiceColumns } from "./columns";
 
-const pageSize = 20;
-const select = "h-9 rounded-md border bg-background px-2 text-sm";
-
+/** `list` comes from useServerList; a shop's own tab passes a fixed tenantId filter and `oneShop`. */
 export function InvoiceTable({
-  tenantId,
-  params,
-  resetKey,
+  list,
+  oneShop = false,
 }: {
-  tenantId?: string;
-  params?: Record<string, unknown>;
-  resetKey?: string;
+  list: ServerList;
+  oneShop?: boolean;
 }) {
   const can = useCan();
-  const [status, setStatus] = useState<number | undefined>();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const { data, isLoading } = useInvoices({
-    page,
-    pageSize,
-    tenantId,
-    ...params,
-    status: params?.status ? Number(params.status) : undefined,
-  } as InvoiceQuery);
-
-  useEffect(() => setPage(1), [resetKey]);
+  const { data, isLoading } = useInvoices(list.request);
 
   const m = useInvoiceMutations();
   const [dialog, setDialog] = useState<{
@@ -61,7 +39,7 @@ export function InvoiceTable({
   const [text, setText] = useState("");
   const [notes, setNotes] = useState("");
 
-  const columns = invoiceColumns(!tenantId, can(Perm.BillingManage), {
+  const columns = invoiceColumns(!oneShop, can(Perm.BillingManage), {
     onPaid: (invoice) => {
       setText("");
       setNotes("");
@@ -75,45 +53,12 @@ export function InvoiceTable({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        <select
-          className={select}
-          value={status ?? ""}
-          onChange={(e) => {
-            setStatus(e.target.value ? Number(e.target.value) : undefined);
-            setPage(1);
-          }}
-        >
-          <option value="">All statuses</option>
-          {Object.entries(invoiceStatusLabel).map(([v, l]) => (
-            <option key={v} value={v}>
-              {l}
-            </option>
-          ))}
-        </select>
-        {!tenantId && (
-          <Input
-            className="max-w-xs"
-            placeholder="Search number, shop, reference…"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
-        )}
-      </div>
-
       <DataTable
         columns={columns}
         data={data?.items ?? []}
         loading={isLoading}
         total={data?.totalCount ?? 0}
-        page={page}
-        pageSize={pageSize}
-        sorting={[]}
-        onPageChange={setPage}
-        onSortingChange={() => {}}
+        {...list.table}
       />
 
       <Dialog

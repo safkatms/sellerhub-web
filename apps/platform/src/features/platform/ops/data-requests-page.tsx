@@ -14,6 +14,9 @@ import {
 import { Input } from "@sellerhub/ui/components/input";
 import { Label } from "@sellerhub/ui/components/label";
 import { DataTable } from "@sellerhub/ui/data-table";
+import { Filters, type FilterDef } from "@sellerhub/ui/filters";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
+import { CircleCheck, FileText } from "lucide-react";
 import { applyProblem } from "@sellerhub/api-client/errors";
 import { Perm, useCan } from "@/features/platform/roles/api";
 import {
@@ -27,17 +30,37 @@ import {
 } from "./api";
 import { dataRequestColumns } from "./columns";
 
-const select = "h-9 rounded-md border bg-background px-2 text-sm";
-const pageSize = 20;
+const defs: FilterDef[] = [
+  {
+    key: "status",
+    type: "select",
+    allLabel: "All statuses",
+    defaultValue: String(DataRequestStatus.Pending),
+    options: Object.entries(dataStatusLabel).map(([value, label]) => ({
+      value,
+      label,
+    })),
+    icon: CircleCheck,
+  },
+  {
+    key: "kind",
+    type: "select",
+    allLabel: "All kinds",
+    options: Object.entries(dataKindLabel).map(([value, label]) => ({
+      value,
+      label,
+    })),
+    icon: FileText,
+  },
+  { key: "range", field: "requestedAtUtc", type: "date-range" },
+  { key: "search", type: "search", placeholder: "Search shop…" },
+];
 
 export function DataRequestsPage() {
   const can = useCan();
   const editable = can(Perm.OpsManage);
-  const [status, setStatus] = useState<number | undefined>(
-    DataRequestStatus.Pending,
-  );
-  const [page, setPage] = useState(1);
-  const { data, isLoading } = useDataRequests({ page, pageSize, status });
+  const list = useServerList({ defs });
+  const { data, isLoading } = useDataRequests(list.request);
   const m = useDataRequestMutations();
   const [dialog, setDialog] = useState<{
     item: DataRequestItem;
@@ -68,32 +91,14 @@ export function DataRequestsPage() {
 
   return (
     <div className="space-y-4">
-      <select
-        className={select}
-        value={status ?? ""}
-        onChange={(e) => {
-          setStatus(e.target.value ? Number(e.target.value) : undefined);
-          setPage(1);
-        }}
-      >
-        <option value="">All statuses</option>
-        {Object.entries(dataStatusLabel).map(([v, l]) => (
-          <option key={v} value={v}>
-            {l}
-          </option>
-        ))}
-      </select>
+      <Filters filters={list.filters} />
 
       <DataTable
         columns={columns}
         data={data?.items ?? []}
         loading={isLoading}
         total={data?.totalCount ?? 0}
-        page={page}
-        pageSize={pageSize}
-        sorting={[]}
-        onPageChange={setPage}
-        onSortingChange={() => {}}
+        {...list.table}
       />
 
       <Dialog

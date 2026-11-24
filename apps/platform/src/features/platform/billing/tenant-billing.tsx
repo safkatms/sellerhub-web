@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import type { Filter } from "@sellerhub/api-client/query";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
 import { Button } from "@sellerhub/ui/components/button";
 import {
   Card,
@@ -34,6 +36,7 @@ import {
 } from "./api";
 
 const select = "h-9 rounded-md border bg-background px-2 text-sm";
+const noDefs: never[] = [];
 
 /** Shop page: invoices for this shop, issue an invoice, grant extra days. */
 export function TenantBillingCards({
@@ -56,6 +59,11 @@ export function TenantBillingCards({
   const [days, setDays] = useState("7");
   const [reason, setReason] = useState("");
   const editable = !readOnly && can(Perm.BillingManage);
+  const shopOnly = useMemo<Filter[]>(
+    () => [{ field: "tenantId", op: "eq", value: tenantId }],
+    [tenantId],
+  );
+  const invoiceList = useServerList({ defs: noDefs, fixed: shopOnly });
 
   return (
     <div className="space-y-4">
@@ -172,7 +180,7 @@ export function TenantBillingCards({
           <CardTitle>Invoices</CardTitle>
         </CardHeader>
         <CardContent>
-          <InvoiceTable tenantId={tenantId} />
+          <InvoiceTable list={invoiceList} oneShop />
         </CardContent>
       </Card>
 

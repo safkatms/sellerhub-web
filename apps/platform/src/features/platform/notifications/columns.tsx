@@ -31,7 +31,6 @@ export const messageColumns = (
     id: "createdAtUtc",
     header: "Created",
     accessorKey: "createdAtUtc",
-    enableSorting: false,
     cell: ({ row }) => (
       <span className="text-xs">{fmtDate(row.original.createdAtUtc)}</span>
     ),

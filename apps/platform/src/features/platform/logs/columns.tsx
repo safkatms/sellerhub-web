@@ -14,7 +14,6 @@ const dateColumn = <T extends { createdAtUtc: string }>(): AppColumnDef<T> => ({
   id: "createdAtUtc",
   header: "Time",
   accessorKey: "createdAtUtc",
-  enableSorting: false,
   cell: ({ getValue }) => fmtDate(getValue<string>()),
 });
 
@@ -80,7 +79,6 @@ export const impersonationColumns = (): AppColumnDef<ImpersonationLog>[] => [
     id: "startedAtUtc",
     header: "Started",
     accessorKey: "startedAtUtc",
-    enableSorting: false,
     cell: ({ getValue }) => fmtDate(getValue<string>()),
   },
   { id: "admin", header: "Admin", enableSorting: false, accessorFn: (r) => r.adminName ?? r.adminId },

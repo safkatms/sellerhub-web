@@ -1,43 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { Input } from "@sellerhub/ui/components/input";
 import { DataTable } from "@sellerhub/ui/data-table";
+import { Filters, type FilterDef } from "@sellerhub/ui/filters";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
 import { useImpersonationLogs } from "./api";
 import { impersonationColumns } from "./columns";
 
-const pageSize = 20;
+const defs: FilterDef[] = [
+  { key: "range", field: "startedAtUtc", type: "date-range" },
+  { key: "search", type: "search", placeholder: "Search reason…" },
+];
 
 export function ImpersonationLogsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const { data, isLoading } = useImpersonationLogs({
-    page,
-    pageSize,
-    search: search || undefined,
-  });
+  const list = useServerList({ defs });
+  const { data, isLoading } = useImpersonationLogs(list.request);
 
   return (
     <div className="space-y-4">
-      <Input
-        className="max-w-xs"
-        value={search}
-        placeholder="Search reason…"
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-      />
+      <Filters filters={list.filters} />
       <DataTable
         columns={impersonationColumns()}
         data={data?.items ?? []}
         loading={isLoading}
         total={data?.totalCount ?? 0}
-        page={page}
-        pageSize={pageSize}
-        sorting={[]}
-        onPageChange={setPage}
-        onSortingChange={() => {}}
+        {...list.table}
       />
     </div>
   );

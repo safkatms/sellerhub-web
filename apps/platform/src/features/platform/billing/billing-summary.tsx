@@ -3,7 +3,9 @@
 import { Coins, Hourglass, Wallet, type LucideIcon } from "lucide-react";
 import { cn } from "@sellerhub/ui/lib/utils";
 import { rangePresets, type RangePreset } from "@sellerhub/ui/lib/date-range";
-import { money, useBillingSummary, type DateRange } from "./api";
+import dayjs, { getDisplayZone } from "@sellerhub/ui/lib/dayjs";
+import { dateRangeOf, type DateValue } from "@sellerhub/ui/filters";
+import { money, useBillingSummary } from "./api";
 
 const tones = {
   violet: { card: "from-primary/10", icon: "bg-primary/15 text-primary" },
@@ -47,17 +49,43 @@ function Tile({
   );
 }
 
-export function BillingSummary({
-  params,
-}: {
-  params?: { fromUtc?: string; toUtc?: string; preset?: RangePreset };
-}) {
-  const { data: s } = useBillingSummary({
-    fromUtc: params?.fromUtc,
-    toUtc: params?.toUtc,
-  });
-  const noRange = !params?.fromUtc && !params?.toUtc;
-  const preset: RangePreset = params?.preset ?? (noRange ? "all" : "custom");
+function customRangeLabel(fromUtc?: string, toUtc?: string) {
+  const zone = getDisplayZone();
+  const format = (value: string) =>
+    dayjs.utc(value).tz(zone).format("DD MMM YYYY");
+
+  if (fromUtc && toUtc) {
+    const from = format(fromUtc);
+    const to = format(
+      dayjs.utc(toUtc).tz(zone).subtract(1, "day").toISOString(),
+    );
+    return from === to ? from : `${from} – ${to}`;
+  }
+  if (fromUtc) return `From ${format(fromUtc)}`;
+  if (toUtc) {
+    const to = format(
+      dayjs.utc(toUtc).tz(zone).subtract(1, "day").toISOString(),
+    );
+    return `Until ${to}`;
+  }
+  return "Custom range";
+}
+
+/** `range` is the same date-range filter value the invoice list uses. */
+export function BillingSummary({ range }: { range?: DateValue }) {
+  const { fromUtc, toUtc } = range ? dateRangeOf(range) : {};
+  const { data: s } = useBillingSummary({ fromUtc, toUtc });
+  const noRange = !fromUtc && !toUtc;
+  const preset: RangePreset =
+    range?.preset && range.preset !== "all"
+      ? range.preset
+      : noRange
+        ? "all"
+        : "custom";
+  const rangeLabel =
+    preset === "custom"
+      ? customRangeLabel(fromUtc, toUtc)
+      : rangePresets[preset];
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <Tile
@@ -75,7 +103,7 @@ export function BillingSummary({
       <Tile
         icon={Coins}
         tone="green"
-        label={noRange ? "Paid (all time)" : `Paid · ${rangePresets[preset]}`}
+        label={noRange ? "Paid (all time)" : `Paid · ${rangeLabel}`}
         value={money(s?.paidThisMonth)}
       />
     </div>

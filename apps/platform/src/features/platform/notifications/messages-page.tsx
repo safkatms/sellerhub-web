@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { CircleCheck, Mail } from "lucide-react";
 import { Button } from "@sellerhub/ui/components/button";
-import { Input } from "@sellerhub/ui/components/input";
 import { DataTable } from "@sellerhub/ui/data-table";
+import { Filters, type FilterDef } from "@sellerhub/ui/filters";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
 import { applyProblem } from "@sellerhub/api-client/errors";
 import { Perm, useCan } from "@/features/platform/roles/api";
 import {
-  Channel,
+  channelLabel,
   messageStatusLabel,
   useMessageMutations,
   useMessages,
@@ -16,23 +18,40 @@ import {
 import { messageColumns } from "./columns";
 import { TestMessageDialog } from "./test-message-dialog";
 
-const select = "h-9 rounded-md border bg-background px-2 text-sm";
-const pageSize = 20;
+const defs: FilterDef[] = [
+  { key: "range", field: "createdAtUtc", type: "date-range" },
+  {
+    key: "status",
+    type: "select",
+    allLabel: "All statuses",
+    options: Object.entries(messageStatusLabel).map(([value, label]) => ({
+      value,
+      label,
+    })),
+    icon: CircleCheck,
+  },
+  {
+    key: "channel",
+    type: "select",
+    allLabel: "Email + SMS",
+    options: Object.entries(channelLabel).map(([value, label]) => ({
+      value,
+      label,
+    })),
+    icon: Mail,
+  },
+  {
+    key: "search",
+    type: "search",
+    placeholder: "Search recipient or template…",
+  },
+];
 
 export function MessagesPage() {
   const can = useCan();
   const editable = can(Perm.NotificationManage);
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<number | undefined>();
-  const [channel, setChannel] = useState<number | undefined>();
-  const [search, setSearch] = useState("");
-  const { data, isLoading } = useMessages({
-    page,
-    pageSize,
-    status,
-    channel,
-    search: search || undefined,
-  });
+  const list = useServerList({ defs });
+  const { data, isLoading } = useMessages(list.request);
   const m = useMessageMutations();
   const [testOpen, setTestOpen] = useState(false);
 
@@ -47,49 +66,10 @@ export function MessagesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <select
-          className={select}
-          value={status ?? ""}
-          onChange={(e) => {
-            setStatus(e.target.value ? Number(e.target.value) : undefined);
-            setPage(1);
-          }}
-        >
-          <option value="">All statuses</option>
-          {Object.entries(messageStatusLabel).map(([v, l]) => (
-            <option key={v} value={v}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <select
-          className={select}
-          value={channel ?? ""}
-          onChange={(e) => {
-            setChannel(e.target.value ? Number(e.target.value) : undefined);
-            setPage(1);
-          }}
-        >
-          <option value="">Email + SMS</option>
-          <option value={Channel.Email}>Email</option>
-          <option value={Channel.Sms}>SMS</option>
-        </select>
-        <Input
-          className="max-w-xs"
-          placeholder="Search recipient or template…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-        />
+      <div className="flex flex-wrap items-start gap-2">
+        <Filters filters={list.filters} className="flex-1" />
         {editable && (
-          <Button
-            variant="outline"
-            className="ml-auto"
-            onClick={() => setTestOpen(true)}
-          >
+          <Button variant="outline" onClick={() => setTestOpen(true)}>
             Send test
           </Button>
         )}
@@ -100,11 +80,7 @@ export function MessagesPage() {
         data={data?.items ?? []}
         loading={isLoading}
         total={data?.totalCount ?? 0}
-        page={page}
-        pageSize={pageSize}
-        sorting={[]}
-        onPageChange={setPage}
-        onSortingChange={() => {}}
+        {...list.table}
       />
 
       <TestMessageDialog open={testOpen} onClose={() => setTestOpen(false)} />

@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CircleCheck, Timer } from "lucide-react";
+import { Filters, type FilterDef } from "@sellerhub/ui/filters";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
 import { Badge } from "@sellerhub/ui/components/badge";
 import { Button } from "@sellerhub/ui/components/button";
 import {
@@ -30,19 +33,36 @@ import {
 } from "./api";
 import { jobRunColumns } from "./columns";
 
-const select = "h-9 rounded-md border bg-background px-2 text-sm";
-const pageSize = 20;
-
 export function JobsPage() {
   const can = useCan();
   const canOps = can(Perm.OpsManage);
   const { data: jobs } = useJobs(true);
-  const [jobName, setJobName] = useState<string | undefined>();
-  const [page, setPage] = useState(1);
-  const { data: runs, isLoading } = useJobRuns(
-    { page, pageSize, jobName },
-    true,
+  const defs = useMemo<FilterDef[]>(
+    () => [
+      {
+        key: "jobName",
+        type: "select",
+        allLabel: "All jobs",
+        options: (jobs ?? []).map((j) => ({ value: j.name, label: j.name })),
+        icon: Timer,
+      },
+      {
+        key: "status",
+        type: "select",
+        allLabel: "All statuses",
+        options: Object.entries(jobStatusLabel).map(([value, label]) => ({
+          value,
+          label,
+        })),
+        icon: CircleCheck,
+      },
+      { key: "range", field: "startedAtUtc", type: "date-range" },
+      { key: "search", type: "search", placeholder: "Search job, message…" },
+    ],
+    [jobs],
   );
+  const list = useServerList({ defs });
+  const { data: runs, isLoading } = useJobRuns(list.request, true);
   const run = useRunJob();
   const [detailsId, setDetailsId] = useState<number | null>(null);
   const { data: details } = useJobRunDetails(detailsId);
@@ -110,32 +130,14 @@ export function JobsPage() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">History</h2>
-          <select
-            className={select}
-            value={jobName ?? ""}
-            onChange={(e) => {
-              setJobName(e.target.value || undefined);
-              setPage(1);
-            }}
-          >
-            <option value="">All jobs</option>
-            {jobs?.map((j) => (
-              <option key={j.name} value={j.name}>
-                {j.name}
-              </option>
-            ))}
-          </select>
         </div>
+        <Filters filters={list.filters} />
         <DataTable
           columns={jobRunColumns(canOps, setDetailsId)}
           data={runs?.items ?? []}
           loading={isLoading}
           total={runs?.totalCount ?? 0}
-          page={page}
-          pageSize={pageSize}
-          sorting={[]}
-          onPageChange={setPage}
-          onSortingChange={() => {}}
+          {...list.table}
         />
       </div>
 

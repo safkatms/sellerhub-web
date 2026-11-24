@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@sellerhub/api-client/client";
-import type { Paged, PagedRequest } from "@sellerhub/api-client/types";
+import { toListParams, type ListRequest } from "@sellerhub/api-client/query";
+import type { Paged } from "@sellerhub/api-client/types";
 
 export const PaymentMethod = { BKash: 1, Nagad: 2, Rocket: 3, Bank: 4, Other: 5 } as const;
 export const paymentMethodLabel: Record<number, string> = { 1: "bKash", 2: "Nagad", 3: "Rocket", 4: "Bank", 5: "Other" };
@@ -96,11 +97,11 @@ export const useCouponMutations = () => {
     };
 };
 
-export type InvoiceQuery = PagedRequest & { tenantId?: string; status?: number } & DateRange;
-export const useInvoices = (q: InvoiceQuery) =>
+/** Filters: tenantId, planId, status, issuedAtUtc, paidAtUtc, total. Sort: number, shop, plan, total, status, issued. */
+export const useInvoices = (q: ListRequest) =>
     useQuery({
         queryKey: [...key, "invoices", q], placeholderData: keepPreviousData,
-        queryFn: () => api.get<Paged<Invoice>>(`${b}/billing/invoices`, { params: q }).then((r) => r.data)
+        queryFn: () => api.get<Paged<Invoice>>(`${b}/billing/invoices`, { params: toListParams(q) }).then((r) => r.data)
     });
 
 export const useInvoiceMutations = () => {
@@ -124,11 +125,11 @@ export const useInvoiceMutations = () => {
     };
 };
 
-export type PaymentRequestQuery = PagedRequest & { tenantId?: string; status?: number };
-export const usePaymentRequests = (q: PaymentRequestQuery) =>
+/** Filters: tenantId, planId, status, method, createdAtUtc, amount. Sort: createdAtUtc, shop, plan, amount, status. */
+export const usePaymentRequests = (q: ListRequest) =>
     useQuery({
         queryKey: [...key, "requests", q], placeholderData: keepPreviousData,
-        queryFn: () => api.get<Paged<PaymentRequestItem>>(`${b}/billing/payment-requests`, { params: q }).then((r) => r.data)
+        queryFn: () => api.get<Paged<PaymentRequestItem>>(`${b}/billing/payment-requests`, { params: toListParams(q) }).then((r) => r.data)
     });
 
 export const useReviewPayment = () => {

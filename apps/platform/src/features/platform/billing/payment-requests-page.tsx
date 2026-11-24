@@ -26,23 +26,39 @@ import {
   type PaymentRequestItem,
 } from "./api";
 import { paymentRequestColumns } from "./columns";
+import { Filters, type FilterDef } from "@sellerhub/ui/filters";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
+import { CircleCheck, Wallet } from "lucide-react";
 
-const pageSize = 20;
-const select = "h-9 rounded-md border bg-background px-2 text-sm";
-
+const defs: FilterDef[] = [
+  { key: "range", field: "createdAtUtc", type: "date-range" },
+  {
+    key: "status",
+    type: "select",
+    allLabel: "All statuses",
+    defaultValue: String(PaymentRequestStatus.Pending),
+    options: Object.entries(paymentStatusLabel).map(([value, label]) => ({
+      value,
+      label,
+    })),
+    icon: CircleCheck,
+  },
+  {
+    key: "method",
+    type: "select",
+    allLabel: "All methods",
+    options: Object.entries(paymentMethodLabel).map(([value, label]) => ({
+      value,
+      label,
+    })),
+    icon: Wallet,
+  },
+  { key: "search", type: "search", placeholder: "Search trx id, shop, payer…" },
+];
 export function PaymentRequestsPage() {
   const can = useCan();
-  const [status, setStatus] = useState<number | undefined>(
-    PaymentRequestStatus.Pending,
-  );
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const { data, isLoading } = usePaymentRequests({
-    page,
-    pageSize,
-    status,
-    search: search || undefined,
-  });
+  const list = useServerList({ defs });
+  const { data, isLoading } = usePaymentRequests(list.request);
   const review = useReviewPayment();
   const [dialog, setDialog] = useState<{
     item: PaymentRequestItem;
@@ -57,46 +73,16 @@ export function PaymentRequestsPage() {
       setDialog({ item, approve });
     },
   );
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <select
-          className={select}
-          value={status ?? ""}
-          onChange={(e) => {
-            setStatus(e.target.value ? Number(e.target.value) : undefined);
-            setPage(1);
-          }}
-        >
-          <option value="">All statuses</option>
-          {Object.entries(paymentStatusLabel).map(([v, l]) => (
-            <option key={v} value={v}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <Input
-          className="max-w-xs"
-          placeholder="Search trx id, shop, payer…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-        />
-      </div>
+      <Filters filters={list.filters} />
 
       <DataTable
         columns={columns}
         data={data?.items ?? []}
         loading={isLoading}
         total={data?.totalCount ?? 0}
-        page={page}
-        pageSize={pageSize}
-        sorting={[]}
-        onPageChange={setPage}
-        onSortingChange={() => {}}
+        {...list.table}
       />
 
       <Dialog

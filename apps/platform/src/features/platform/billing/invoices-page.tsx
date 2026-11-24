@@ -1,12 +1,19 @@
 "use client";
 
-import { Filters, useFilters, type FilterDef } from "@sellerhub/ui/filters";
+import { CircleCheck } from "lucide-react";
+import { Filters, type DateValue, type FilterDef } from "@sellerhub/ui/filters";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
 import { invoiceStatusLabel } from "./api";
 import { BillingSummary } from "./billing-summary";
 import { InvoiceTable } from "./invoice-table";
 
 const defs: FilterDef[] = [
-  { key: "range", type: "date-range" },
+  {
+    key: "range",
+    field: "issuedAtUtc",
+    type: "date-range",
+    defaultPreset: "this_month",
+  },
   {
     key: "status",
     type: "select",
@@ -15,6 +22,7 @@ const defs: FilterDef[] = [
       value,
       label,
     })),
+    icon: CircleCheck,
   },
   {
     key: "search",
@@ -24,12 +32,12 @@ const defs: FilterDef[] = [
 ];
 
 export function InvoicesPage() {
-  const f = useFilters(defs);
+  const list = useServerList({ defs });
   return (
     <div className="space-y-4">
-      <Filters filters={f} />
-      <BillingSummary params={f.params} />
-      <InvoiceTable params={f.params} resetKey={f.paramsKey} />
+      <Filters filters={list.filters} />
+      <BillingSummary range={list.filters.values.range as DateValue} />
+      <InvoiceTable list={list} />
     </div>
   );
 }

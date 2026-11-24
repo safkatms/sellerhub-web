@@ -1,69 +1,69 @@
 "use client";
-import { useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-import type { SortingState } from "@tanstack/react-table";
-import { Input } from "@sellerhub/ui/components/input";
+import { CircleCheck, Tag } from "lucide-react";
 import { Button } from "@sellerhub/ui/components/button";
 import { DataTable } from "@sellerhub/ui/data-table";
+import { Filters, type FilterDef } from "@sellerhub/ui/filters";
+import { useServerList } from "@sellerhub/ui/hooks/use-server-list";
 import { Perm, useCan } from "@/features/platform/roles/api";
 import { useTags } from "@/features/platform/crm/api";
+import { planStateLabel } from "@/lib/enums";
 import { useTenants } from "./api";
 import { tenantColumns } from "./columns";
 
-const pageSize = 20;
+const stateDef: FilterDef = {
+  key: "planState",
+  type: "select",
+  allLabel: "All states",
+  options: planStateLabel.map((label, value) => ({
+    value: String(value),
+    label,
+  })),
+  icon: CircleCheck,
+};
+const searchDef: FilterDef = {
+  key: "search",
+  type: "search",
+  placeholder: "Search shops…",
+};
 
-/** Server-side paged/sorted/searched list (unlike the other lists, which sort locally). */
 export function TenantsListPage() {
   const can = useCan();
   const { data: tags } = useTags();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [tagId, setTagId] = useState<number | undefined>();
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "createdAt", desc: true },
-  ]);
 
-  const { data, isLoading } = useTenants({
-    page,
-    pageSize,
-    search: search || undefined,
-    tagId,
-    sortBy: sorting[0]?.id,
-    desc: sorting[0]?.desc ?? false,
+  const defs = useMemo<FilterDef[]>(
+    () => [
+      stateDef,
+      ...(tags && tags.length > 0
+        ? ([
+            {
+              key: "tagId",
+              type: "select",
+              allLabel: "All tags",
+              options: tags.map((t) => ({
+                value: String(t.id),
+                label: `${t.name} (${t.tenantCount})`,
+              })),
+              icon: Tag,
+            },
+          ] satisfies FilterDef[])
+        : []),
+      searchDef,
+    ],
+    [tags],
+  );
+
+  const list = useServerList({
+    defs,
+    initialSort: [{ id: "createdAt", desc: true }],
   });
+  const { data, isLoading } = useTenants(list.request);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex flex-1 items-center gap-2">
-          <Input
-            placeholder="Search shops…"
-            className="max-w-sm"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
-          {tags && tags.length > 0 && (
-            <select
-              className="h-9 rounded-md border bg-background px-2 text-sm"
-              aria-label="Filter by tag"
-              value={tagId ?? ""}
-              onChange={(e) => {
-                setTagId(e.target.value ? Number(e.target.value) : undefined);
-                setPage(1);
-              }}
-            >
-              <option value="">All tags</option>
-              {tags.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({t.tenantCount})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+      <div className="flex items-start justify-between gap-2">
+        <Filters filters={list.filters} className="flex-1" />
         {can(Perm.TenantManage) && (
           <Button
             nativeButton={false}
@@ -78,14 +78,7 @@ export function TenantsListPage() {
         data={data?.items ?? []}
         loading={isLoading}
         total={data?.totalCount ?? 0}
-        page={page}
-        pageSize={pageSize}
-        sorting={sorting}
-        onPageChange={setPage}
-        onSortingChange={(next) => {
-          setSorting(next);
-          setPage(1);
-        }}
+        {...list.table}
       />
     </div>
   );

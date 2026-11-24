@@ -8,6 +8,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import type { Filter } from "@sellerhub/api-client/query";
 import { cn } from "./lib/utils";
 import { rangePresets, resolveRange, type RangePreset } from "./lib/date-range";
 import { Button } from "./components/button";
@@ -22,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./components/select";
+import { Switch } from "./components/switch";
 
 /* ------------------------------------------------------------------ types */
 
@@ -35,6 +37,14 @@ type Base = {
   label?: string;
   icon?: LucideIcon;
   className?: string;
+  /** Backend field (from the list's QueryMap). Defaults to `key`. */
+  field?: string;
+  /**
+   * Overrides the default mapping (select → eq, multiselect → in, toggle → eq
+   * true, async-select → eq, number-range → gte/lte, date-range → gte/lt).
+   * Only called when the control has a value.
+   */
+  toFilter?: (value: unknown) => Filter | Filter[] | undefined;
 };
 
 export type FilterDef =
@@ -47,17 +57,11 @@ export type FilterDef =
     })
   | (Base & { type: "multiselect"; options: Option[]; searchable?: boolean })
   | (Base & { type: "toggle" })
-  | (Base & {
-      type: "number-range";
-      unit?: string;
-      minKey?: string;
-      maxKey?: string;
-    })
+  | (Base & { type: "number-range"; unit?: string })
   | (Base & {
       type: "date-range";
-      fromKey?: string;
-      toKey?: string;
       presets?: RangePreset[];
+      defaultPreset?: RangePreset;
     })
   | (Base & {
       type: "async-select";
@@ -72,7 +76,7 @@ const emptyOf = (d: FilterDef): unknown => {
     case "search":
       return "";
     case "select":
-      return d.defaultValue;
+      return d.defaultValue ?? "__all";
     case "multiselect":
       return [] as string[];
     case "toggle":
@@ -80,18 +84,25 @@ const emptyOf = (d: FilterDef): unknown => {
     case "number-range":
       return { min: "", max: "" } satisfies NumberRange;
     case "date-range":
-      return { preset: "all", from: "", to: "" } satisfies DateValue;
+      return {
+        preset: d.defaultPreset ?? "all",
+        from: "",
+        to: "",
+      } satisfies DateValue;
     case "async-select":
       return undefined;
   }
 };
+
+export const valueOf = (d: FilterDef, values: Values): unknown =>
+  d.key in values ? values[d.key] : emptyOf(d);
 
 const isEmpty = (d: FilterDef, v: unknown): boolean => {
   switch (d.type) {
     case "search":
       return !(v as string)?.trim();
     case "select":
-      return v === d.defaultValue || v == null;
+      return v == null || v === "__all";
     case "multiselect":
       return !(v as string[])?.length;
     case "toggle":
@@ -107,36 +118,42 @@ const isEmpty = (d: FilterDef, v: unknown): boolean => {
   }
 };
 
-function toParams(d: FilterDef, v: unknown): Record<string, unknown> {
-  if (isEmpty(d, v)) return {};
+/** The backend filters one control stands for. `search` defs feed `search` instead. */
+function toFilters(d: FilterDef, v: unknown): Filter[] {
+  if (d.type === "search" || isEmpty(d, v)) return [];
+  if (d.toFilter) {
+    const r = d.toFilter(v);
+    return r ? (Array.isArray(r) ? r : [r]) : [];
+  }
+  const field = d.field ?? d.key;
   switch (d.type) {
-    case "search":
-      return { [d.key]: (v as string).trim() };
     case "select":
-      return { [d.key]: v };
+      return [{ field, op: "eq", value: v as string }];
     case "multiselect":
-      return { [d.key]: v };
+      return [{ field, op: "in", value: v as string[] }];
     case "toggle":
-      return { [d.key]: true };
+      return [{ field, op: "eq", value: true }];
     case "async-select":
-      return { [d.key]: (v as AsyncValue).value };
+      return [{ field, op: "eq", value: (v as AsyncValue).value }];
     case "number-range": {
       const r = v as NumberRange;
-      return {
-        [d.minKey ?? `${d.key}Min`]: r.min === "" ? undefined : Number(r.min),
-        [d.maxKey ?? `${d.key}Max`]: r.max === "" ? undefined : Number(r.max),
-      };
+      const out: Filter[] = [];
+      if (r.min !== "") out.push({ field, op: "gte", value: r.min });
+      if (r.max !== "") out.push({ field, op: "lte", value: r.max });
+      return out;
     }
     case "date-range": {
-      const x = v as DateValue;
-      const r = resolveRange(x.preset, x.from, x.to);
-      return {
-        [d.fromKey ?? "fromUtc"]: r.fromUtc,
-        [d.toKey ?? "toUtc"]: r.toUtc,
-      };
+      const r = dateRangeOf(v as DateValue);
+      const out: Filter[] = [];
+      if (r.fromUtc) out.push({ field, op: "gte", value: r.fromUtc });
+      if (r.toUtc) out.push({ field, op: "lt", value: r.toUtc });
+      return out;
     }
   }
 }
+
+/** UTC bounds of a date-range value (`to` is exclusive). */
+export const dateRangeOf = (v: DateValue) => resolveRange(v.preset, v.from, v.to);
 
 /* ------------------------------------------------------------------- hook */
 
@@ -151,23 +168,38 @@ export function useFilters(defs: FilterDef[]) {
   const reset = () =>
     setValues(Object.fromEntries(defs.map((d) => [d.key, emptyOf(d)])));
 
-  const params = useMemo(() => {
-    const out: Record<string, unknown> = {};
-    for (const d of defs) Object.assign(out, toParams(d, values[d.key]));
-    return out;
+  const { search, filters } = useMemo(() => {
+    let search: string | undefined;
+    const filters: Filter[] = [];
+    for (const d of defs) {
+      const v = valueOf(d, values);
+      if (d.type === "search") search ||= (v as string)?.trim() || undefined;
+      else filters.push(...toFilters(d, v));
+    }
+    return { search, filters };
   }, [defs, values]);
 
-  const active = defs.filter((d) => !isEmpty(d, values[d.key])).length;
-  // Use as an effect dependency to reset paging: useEffect(() => setPage(1), [paramsKey])
-  const paramsKey = JSON.stringify(params);
+  const active = defs.filter((d) => {
+    const v = valueOf(d, values);
+    if (d.type === "select") {
+      return v !== (d.defaultValue ?? "__all");
+    }
+    if (d.type === "date-range") {
+      return (v as DateValue).preset !== (d.defaultPreset ?? "all");
+    }
+    return !isEmpty(d, v);
+  }).length;
+  // Changes whenever the request would; useServerList resets paging on it.
+  const key = JSON.stringify([search, filters]);
 
   return {
     defs,
     values,
     set,
     reset,
-    params,
-    paramsKey,
+    search,
+    filters,
+    key,
     active,
     isActive: active > 0,
   };
@@ -197,7 +229,9 @@ function SearchField({
     return () => clearTimeout(t);
   }, [local]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <div className={cn("relative w-full max-w-sm", d.className)}>
+    <div
+      className={cn("relative w-full min-w-48 max-w-sm sm:w-72", d.className)}
+    >
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         className={cn(field, "pl-9")}
@@ -216,19 +250,14 @@ function SelectField({
 }: {
   d: Extract<FilterDef, { type: "select" }>;
   value?: string;
-  onChange: (v?: string) => void;
+  onChange: (v: string) => void;
 }) {
   const Icon = d.icon;
+  const v = value ?? "__all";
   const current =
-    d.options.find((o) => o.value === value)?.label ??
-    d.allLabel ??
-    d.label ??
-    "";
+    d.options.find((o) => o.value === v)?.label ?? d.allLabel ?? d.label ?? "";
   return (
-    <Select
-      value={value ?? "__all"}
-      onValueChange={(v) => onChange(!v || v === "__all" ? undefined : v)}
-    >
+    <Select value={v} onValueChange={(x) => x && onChange(x)}>
       <SelectTrigger className={cn(filterTrigger, d.className)}>
         {Icon && <Icon className="h-4 w-4 shrink-0" />}
         <SelectValue>{current}</SelectValue>
@@ -472,7 +501,7 @@ export function Filters({
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
       {defs.map((d) => {
-        const v = values[d.key];
+        const v = valueOf(d, values);
         switch (d.type) {
           case "search":
             return (
@@ -528,7 +557,7 @@ export function Filters({
                   d.className,
                 )}
               >
-                <Checkbox
+                <Switch
                   checked={Boolean(v)}
                   onCheckedChange={(c) => set(d.key, c === true)}
                 />
@@ -560,8 +589,15 @@ export function Filters({
         }
       })}
       {showReset && isActive && (
-        <Button variant="ghost" className="h-10 rounded-xl" onClick={reset}>
-          <X className="mr-1 h-4 w-4" /> Clear
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-10 shrink-0 rounded-xl"
+          onClick={reset}
+          aria-label="Clear filters"
+          title="Clear filters"
+        >
+          <X className="size-4" />
         </Button>
       )}
     </div>

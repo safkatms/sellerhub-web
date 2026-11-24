@@ -14,7 +14,6 @@
     "./data-table": "./src/data-table.tsx",
     "./display-zone": "./src/display-zone.tsx",
     "./time-zone-select": "./src/time-zone-select.tsx",
-    "./date-range-filter": "./src/date-range-filter.tsx",
     "./filters": "./src/filters.tsx"
   },
   "scripts": {
@@ -22,6 +21,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@sellerhub/api-client": "*",
     "@tanstack/react-table": "^9.3.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
